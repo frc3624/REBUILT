@@ -1,19 +1,31 @@
-// Copyright (c) FIRST and other WPILib contributors.
-// Open Source Software; you can modify and/or share it under the terms of
-// the WPILib BSD license file in the root directory of this project.
-
 package frc.robot;
 
-/**
- * The Constants class provides a convenient place for teams to hold robot-wide numerical or boolean
- * constants. This class should not be used for any other purpose. All constants should be declared
- * globally (i.e. public static). Do not put anything functional in this class.
- *
- * <p>It is advised to statically import this class (or one of its inner classes) wherever the
- * constants are needed, to reduce verbosity.
- */
 public final class Constants {
-  public static class OperatorConstants {
+  public static final class OperatorConstants{
     public static final int kDriverControllerPort = 0;
+  }
+
+  public static final class ShooterConstants {
+    public static final int kSparkFlexCanId = 1;
+
+    // 1:1 motor to wheel
+    public static final double kGearing = 1.0;
+
+    // Two 4" Colsons (starter estimate). Refine later with SysId.
+    public static final double kJ = 0.00155; // kg*m^2
+
+    public static final double kMaxVolts = 12.0;
+
+    // Feedforward starter guesses (RPM-based). Replace with SysId later.
+    public static final double kS = 0.20;     // volts
+    public static final double kV = 0.0020;   // volts per RPM
+    public static final double kA = 0.00020;  // volts per (RPM/s)
+
+    // PID starter guesses (RIO-side)
+    public static final double kP = 0.0345;
+    public static final double kI = 0.0;
+    public static final double kD = 0.0003;
+
+    public static final double kRpmTolerance = 75.0;
   }
 }
