@@ -1,0 +1,61 @@
+{
+  "version": "2025.0",
+  "waypoints": [
+    {
+      "anchor": {
+        "x": 3.6250641025641017,
+        "y": 2.642051282051282
+      },
+      "prevControl": null,
+      "nextControl": {
+        "x": 3.6082991803278692,
+        "y": 2.02904713114754
+      },
+      "isLocked": false,
+      "linkedName": "SideReef2"
+    },
+    {
+      "anchor": {
+        "x": 1.3442307692307687,
+        "y": 0.8978846153846155
+      },
+      "prevControl": {
+        "x": 2.2776639344262293,
+        "y": 1.9810963114754099
+      },
+      "nextControl": null,
+      "isLocked": false,
+      "linkedName": null
+    }
+  ],
+  "rotationTargets": [],
+  "constraintZones": [],
+  "pointTowardsZones": [],
+  "eventMarkers": [
+    {
+      "name": "stationIntake",
+      "waypointRelativePos": 0.26578073089701215,
+      "endWaypointRelativePos": null,
+      "command": null
+    }
+  ],
+  "globalConstraints": {
+    "maxVelocity": 5.0,
+    "maxAcceleration": 2.5,
+    "maxAngularVelocity": 240.0,
+    "maxAngularAcceleration": 120.0,
+    "nominalVoltage": 12.0,
+    "unlimited": false
+  },
+  "goalEndState": {
+    "velocity": 0,
+    "rotation": -127.30394827798347
+  },
+  "reversed": false,
+  "folder": null,
+  "idealStartingState": {
+    "velocity": 0,
+    "rotation": 57.724355685422374
+  },
+  "useDefaultConstraints": true
+}

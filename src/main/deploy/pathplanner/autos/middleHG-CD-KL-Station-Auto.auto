@@ -1,0 +1,131 @@
+{
+  "version": "2025.0",
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "named",
+          "data": {
+            "name": "liftStopper"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "positionAuto"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "main1Path"
+          }
+        },
+        {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "named",
+                "data": {
+                  "name": "liftStopper"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "timedIntake"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "mirror2Path"
+          }
+        },
+        {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "named",
+                "data": {
+                  "name": "liftStopper"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "timedIntake"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "mirror4Path"
+          }
+        },
+        {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "named",
+                "data": {
+                  "name": "liftStopper"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "timedIntake"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "MirrorCoralIntakePath1"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "stationIntake"
+          }
+        },
+        {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "named",
+                "data": {
+                  "name": "coralIntake"
+                }
+              },
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "MirrorCoralIntakePath2"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "resetOdom": true,
+  "folder": null,
+  "choreoAuto": false
+}

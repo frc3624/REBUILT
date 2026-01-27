@@ -1,0 +1,61 @@
+{
+  "version": "2025.0",
+  "waypoints": [
+    {
+      "anchor": {
+        "x": 3.6250641025641017,
+        "y": 5.4389102564102565
+      },
+      "prevControl": null,
+      "nextControl": {
+        "x": 1.5196794871794865,
+        "y": 5.108653846153846
+      },
+      "isLocked": false,
+      "linkedName": "SideReef1"
+    },
+    {
+      "anchor": {
+        "x": 3.6250641025641017,
+        "y": 2.642051282051282
+      },
+      "prevControl": {
+        "x": 2.6250641025641017,
+        "y": 2.642051282051282
+      },
+      "nextControl": null,
+      "isLocked": false,
+      "linkedName": "SideReef2"
+    }
+  ],
+  "rotationTargets": [],
+  "constraintZones": [],
+  "pointTowardsZones": [],
+  "eventMarkers": [
+    {
+      "name": "depositL1",
+      "waypointRelativePos": 0.345514950166108,
+      "endWaypointRelativePos": null,
+      "command": null
+    }
+  ],
+  "globalConstraints": {
+    "maxVelocity": 5.0,
+    "maxAcceleration": 2.5,
+    "maxAngularVelocity": 240.0,
+    "maxAngularAcceleration": 120.0,
+    "nominalVoltage": 12.0,
+    "unlimited": false
+  },
+  "goalEndState": {
+    "velocity": 0,
+    "rotation": 57.724355685422374
+  },
+  "reversed": false,
+  "folder": null,
+  "idealStartingState": {
+    "velocity": 0,
+    "rotation": -56.88865803962793
+  },
+  "useDefaultConstraints": true
+}

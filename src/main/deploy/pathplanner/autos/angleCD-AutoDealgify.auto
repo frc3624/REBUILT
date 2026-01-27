@@ -1,0 +1,126 @@
+{
+  "version": "2025.0",
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "named",
+          "data": {
+            "name": "liftStopper"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "depositL1"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "angleEFPath"
+          }
+        },
+        {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "named",
+                "data": {
+                  "name": "timedIntake"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "autoStopper"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "angleEF-toCD-Path"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "depositL1"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "named",
+                "data": {
+                  "name": "timedIntake"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "autoStopper"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "CD-AB-Path"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "L3"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "named",
+                "data": {
+                  "name": "depositL1"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "algaeIntake"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "resetOdom": true,
+  "folder": null,
+  "choreoAuto": false
+}
