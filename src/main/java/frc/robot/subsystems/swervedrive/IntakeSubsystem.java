@@ -1,32 +1,35 @@
 package frc.robot.subsystems.swervedrive;
 
-import java.io.ObjectInputFilter.Config;
+import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.DutyCycleOut;
+import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.Command;
+import com.revrobotics.spark.SparkFlex;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
+
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants.ArmConstants;
-import static edu.wpi.first.units.Units.*;
-import com.ctre.phoenix6.signals.InvertedValue;
 
 
 public class IntakeSubsystem extends SubsystemBase {
     private final TalonFX motorFx;
+    private final TalonFX motorFx2;
     private final VoltageOut m_voltReq;
     private final MotionMagicVoltage motionMagicRequest;
     private final DutyCycleOut dutyCycleRequest;
     private final SysIdRoutine sysIdRoutine;
-
+   
     public IntakeSubsystem(){
         motorFx = new TalonFX(ArmConstants.ARM_MOTOR_CAN_ID);
+        motorFx2 = new TalonFX(ArmConstants.ARM_MOTOR2_CAN_ID);
         m_voltReq = new VoltageOut(0.0);
         configureMotor();
         sysIdRoutine = configSysId();
@@ -36,7 +39,9 @@ public class IntakeSubsystem extends SubsystemBase {
     
     private void configureMotor() {
       TalonFXConfiguration config = new TalonFXConfiguration();
-      
+      TalonFXConfiguration config2 = new TalonFXConfiguration();
+
+      motorFx2.setControl(new Follower(motorFx.getDeviceID(), true));
       config.Feedback.SensorToMechanismRatio = ArmConstants.TOTAL_GEAR_RATIO;
       
    
@@ -62,8 +67,14 @@ public class IntakeSubsystem extends SubsystemBase {
       config.MotorOutput.Inverted = ArmConstants.ARM_MOTOR_INVERTED 
           ? InvertedValue.Clockwise_Positive 
           : InvertedValue.CounterClockwise_Positive;
+          config2.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+      config2.MotorOutput.Inverted = ArmConstants.ARM_MOTOR_INVERTED 
+          ? InvertedValue.Clockwise_Positive 
+          : InvertedValue.CounterClockwise_Positive;
       motorFx.getConfigurator().apply(config);
+      motorFx2.getConfigurator().apply(config);
     }
+
     private SysIdRoutine configSysId(){
       return
           new SysIdRoutine(
@@ -115,4 +126,10 @@ public SysIdRoutine getSysID(){
 
 return this.sysIdRoutine;
 }
+public void setSpeed(double speed)
+{
+   motorFx.set(speed); 
+}
+
+
 }

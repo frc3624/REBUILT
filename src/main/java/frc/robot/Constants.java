@@ -99,6 +99,7 @@ public final class Constants
     public static final double positionUp = 0; //Set based on set positons
     public static final double positionDown = 0; // Set based on set positions
     public static final int ARM_MOTOR_CAN_ID = 10; // Change to CAN ID
+    public static final int ARM_MOTOR2_CAN_ID = 11;
     public static final boolean ARM_MOTOR_INVERTED = false; // Set based on testing
     //PID Constants
     public static final double kP= 0.0;
