@@ -1,0 +1,49 @@
+{
+  "version": "2025.0",
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "named",
+          "data": {
+            "name": "liftStopper"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "depositL1"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "topJiPath"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "timedIntake"
+          }
+        },
+        {
+          "type": "wait",
+          "data": {
+            "waitTime": 1.0
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "JiStationPath"
+          }
+        }
+      ]
+    }
+  },
+  "resetOdom": true,
+  "folder": null,
+  "choreoAuto": false
+}
