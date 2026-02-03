@@ -127,7 +127,7 @@ public SysIdRoutine getSysID(){
 return this.sysIdRoutine;
 }
 public void setSpeed(double speed)
-{
+{ 
    motorFx.set(speed); 
 }
 
