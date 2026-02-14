@@ -11,16 +11,17 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
-import frc.robot.subsystems.IntakeSubsystem;
-import frc.robot.commands.IntakeSubsystemCommand;
+import frc.robot.subsystems.Intake;
+import frc.robot.commands.IntakeArmCommand;
+import frc.robot.commands.IntakeCommand;
 
 public class RobotContainer {
+    //Swerve Stuff
     private double MaxSpeed = 1.0 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
     private double MaxAngularRate = RotationsPerSecond.of(2).in(RadiansPerSecond);
 
@@ -32,55 +33,58 @@ public class RobotContainer {
 
     private final Telemetry logger = new Telemetry(MaxSpeed);
     private final CommandXboxController joystick = new CommandXboxController(0);
-
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
-   
-    private final IntakeSubsystem testSubsystem = new IntakeSubsystem();
+    
+    //Subsystem
+    private final Intake intakeSubsystem = new Intake();
 
-  
-    private final IntakeSubsystemCommand raiseTest = new IntakeSubsystemCommand(testSubsystem, 0.1);
-    private final IntakeSubsystemCommand lowerTest = new IntakeSubsystemCommand(testSubsystem, -0.1);
+    //Commands
+    private final IntakeArmCommand moveUp = new IntakeArmCommand(intakeSubsystem, Constants.IntakeArmConstants.speed);
+    private final IntakeArmCommand moveDown = new IntakeArmCommand(intakeSubsystem, -Constants.IntakeArmConstants.speed);
+    private final IntakeCommand runIntake = new IntakeCommand(intakeSubsystem, Constants.IntakeConstants.SPEED);
 
     public RobotContainer() {
         configureBindings();
     }
 
     private void configureBindings() {
+        //Swerve Buttons
         drivetrain.setDefaultCommand(
             drivetrain.applyRequest(() ->
                 drive.withVelocityX(-joystick.getLeftY() * MaxSpeed)
                     .withVelocityY(-joystick.getLeftX() * MaxSpeed)
                     .withRotationalRate(-joystick.getRightX() * MaxAngularRate)
             )
-        );  
+        );
 
-        
+        joystick.leftBumper().onTrue(
+            new InstantCommand(() -> drivetrain.getPigeon2().setYaw(0), drivetrain)
+        );
 
-        joystick.rightTrigger().whileTrue(raiseTest);
-        joystick.leftTrigger().whileTrue(lowerTest);
 
         final var idle = new SwerveRequest.Idle();
         RobotModeTriggers.disabled().whileTrue(
             drivetrain.applyRequest(() -> idle).ignoringDisable(true)
         );
 
-
-
-
-
         drivetrain.registerTelemetry(logger::telemeterize);
+
+        //Intake Buttons
+        joystick.rightTrigger().whileTrue(moveUp);
+        joystick.leftTrigger().whileTrue(moveDown);
+        joystick.a().toggleOnTrue(runIntake);
     }
 
     public Command getAutonomousCommand() {
         final var idle = new SwerveRequest.Idle();
-        return Commands.sequence(
-            drivetrain.runOnce(() -> drivetrain.seedFieldCentric(Rotation2d.kZero)),
-            drivetrain.applyRequest(() ->
-                drive.withVelocityX(0.5)
-                    .withVelocityY(0)
-                    .withRotationalRate(0)
-            ).withTimeout(5.0),
-            drivetrain.applyRequest(() -> idle)
-        );
+        return drivetrain.runOnce(() -> drivetrain.seedFieldCentric(Rotation2d.kZero))
+            .andThen(
+                drivetrain.applyRequest(() ->
+                    drive.withVelocityX(0.5)
+                        .withVelocityY(0)
+                        .withRotationalRate(0)
+                ).withTimeout(5.0)
+            )
+            .andThen(drivetrain.applyRequest(() -> idle));
     }
 }

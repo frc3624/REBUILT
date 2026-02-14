@@ -128,6 +128,14 @@ public final class Constants
     public static final double ARM_POSITION_TOLERANCE = 0.01;
 
   }
+    public static final class IntakeConstants {
+        public static final int motorID = 16;     
+        public static final double SPEED = 0.6;    
+    }
+    public static final class IntakeArmConstants {
+    public static final double speed = 0.05;
+ 
+    }
 
+}
 
-  }
