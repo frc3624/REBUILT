@@ -118,7 +118,7 @@ public class Intake extends SubsystemBase{
    }
   public void setSpeed(double speed)
   {
-      leader.set(speed);
+      intakeMotor.set(speed);
   }
 
   public void setPosition()

@@ -136,6 +136,23 @@ public final class Constants
     public static final double speed = 0.05;
  
     }
+    public static final class ShooterConstants{
+      public static final double conveyorSpeed = .5;
+      public static final int conveyorID = 17;
+      public static final int leadShooterID = 18;
+      public static final int followShooterID = 19; 
 
+      public static final int kCurrentLimit = 80;
+      public static final int kVoltageComp = 11;
+      public static final int kToleranceRPM = 20;
+      public static final int rpm = 1500;
+
+      
+      public static final double kP= 0.0;
+      public static final double kI= 0.0;
+      public static final double kD = 0.0;
+      public static final double kFF = 0.01;
+
+    }
 }
 
