@@ -22,7 +22,7 @@ public class Shooter extends SubsystemBase {
         new SparkFlex(ShooterConstants.leadShooterID, MotorType.kBrushless);
         private final SparkFlex follower =
         new SparkFlex(ShooterConstants.followShooterID, MotorType.kBrushless);
-    private final SparkFlex conveyor = new SparkFlex(ShooterConstants.conveyorID, MotorType.kBrushless);
+    //private final SparkFlex conveyor = new SparkFlex(ShooterConstants.conveyorID, MotorType.kBrushless);
  
     private final RelativeEncoder encoder;
     private final SparkClosedLoopController pidController;
@@ -54,7 +54,7 @@ public class Shooter extends SubsystemBase {
     
     public void setBothSpeed(double speed1, double speed2){
         leader.set(speed1);
-        conveyor.set(speed2);
+        //conveyor.set(speed2);
     }
 
     public void configureMotors(){
@@ -102,7 +102,7 @@ public class Shooter extends SubsystemBase {
 
     public void setConveyorSpeed(double speed)
     {
-      conveyor.set(speed);
+      //conveyor.set(speed);
     }
  
     /**

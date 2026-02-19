@@ -1,27 +1,29 @@
 package frc.robot.commands;
 
 import edu.wpi.first.wpilibj2.command.Command;
-import frc.robot.subsystems.Shooter;
+import frc.robot.subsystems.Conveyor;
 import frc.robot.Constants.ShooterConstants;
-public class Conveyor extends Command {
 
-    private final Shooter shooter;
+
+public class ConveyorCommand extends Command {
+
+    private final Conveyor conveyor;
     private final double speed;
 
-    public Conveyor(Shooter shooter, double speed) {
-        this.shooter = shooter;
+    public ConveyorCommand(Conveyor conveyor, double speed) {
+        this.conveyor = conveyor;
         this.speed = speed;
-        addRequirements(shooter);
+        addRequirements(conveyor);
     }
 
     @Override
     public void initialize() {
-        shooter.setConveyorSpeed(speed);
+        conveyor.setSpeed(-speed);
     }
 
     @Override
     public void end(boolean interrupted) {
-        shooter.setConveyorSpeed(0);
+        conveyor.setSpeed(0);
     }
 
     @Override
