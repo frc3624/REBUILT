@@ -13,7 +13,8 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.FeedbackSensor;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkClosedLoopController;
- 
+import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
+
 import frc.robot.Constants.ShooterConstants;
  
 public class Shooter extends SubsystemBase {
@@ -26,7 +27,8 @@ public class Shooter extends SubsystemBase {
  
     private final RelativeEncoder encoder;
     private final SparkClosedLoopController pidController;
- 
+    private final InterpolatingDoubleTreeMap rpmMap = new InterpolatingDoubleTreeMap();
+
     private double targetRPM = 0;
  
     public Shooter() {
@@ -50,6 +52,9 @@ public class Shooter extends SubsystemBase {
         // Get encoder and PID controller
         encoder = leader.getEncoder();
         pidController = leader.getClosedLoopController();
+        
+        //Interpolating Tree Map, MAKE SURE THIS JAWN IS IN DOUBLES
+        rpmMap.put(1.0, 1500.0);
     }
     
     public void setBothSpeed(double speed1, double speed2){
@@ -143,6 +148,15 @@ public class Shooter extends SubsystemBase {
     public void setShooterSpeed(double speed){
       leader.set(speed);
     }
+
+    public double getTargetRpm(double distance){
+        return rpmMap.get(distance);
+    }
+
+    public void setRpm(double rpm){
+        targetRPM = rpm;
+    }
+
 
     @Override
     public void periodic() {

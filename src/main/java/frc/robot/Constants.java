@@ -30,7 +30,9 @@ public final class Constants
         // =======================================================
 
         /** Tag ID to follow */
-        public static final int FOLLOW_TAG_ID = 1;
+
+        public static final String FRONT_LIMELIGHT = "limelight"; //Change to whatever limelight is named to in interface
+        public static final int FOLLOW_TAG_ID = 10;
 
         /** Desired distance from the AprilTag (in meters) */
         public static final double FOLLOW_TAG_DISTANCE_METERS = 1.00;
@@ -86,8 +88,8 @@ public final class Constants
 
     public static final double positionUp = 6; //Set based on set positons
     public static final double positionDown = 0; // Set based on set positions
-    public static final int ARM_MOTOR_CAN_ID = 10; // Change to CAN ID
-    public static final int ARM_MOTOR2_CAN_ID = 11;
+    public static final int ARM_MOTOR_CAN_ID = 14; // Change to CAN ID
+    public static final int ARM_MOTOR2_CAN_ID = 15;
     public static final boolean ARM_MOTOR_INVERTED = false; // Set based on testing
     //PID Constants
     public static final double kP= 0.0;
@@ -130,11 +132,12 @@ public final class Constants
   }
     public static final class IntakeConstants {
         public static final int motorID = 16;     
-        public static final double SPEED = 0.3;    
+        public static final double SPEED = 0.15;    
     }
     public static final class IntakeArmConstants {
     public static final double speed = 0.05;
  
+
     }
     public static final class ShooterConstants{
       public static final double conveyorSpeed = .5;
@@ -144,15 +147,19 @@ public final class Constants
 
       public static final int kCurrentLimit = 80;
       public static final int kVoltageComp = 11;
-      public static final int kToleranceRPM = 100;
-      public static final int rpm = 1500;
+      public static final int kToleranceRPM = 15;
+      public static final int rpm = 3000;
 
       
-      public static final double kP= 0.000;
+      public static final double kP= 0.0008;
       public static final double kI= 0.0;
       public static final double kD = 0.0;
       public static final double kFF = 0.000167;
 
     }
+    
+
+      
+    
 }
 

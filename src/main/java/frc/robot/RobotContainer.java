@@ -6,10 +6,13 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
 
+import javax.sql.rowset.JoinRowSet;
+
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
@@ -22,11 +25,14 @@ import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Shooter;
+import frc.robot.util.LimelightHelpers;
 import frc.robot.commands.IntakeArmCommand;
 import frc.robot.commands.IntakeCommand;
 import frc.robot.commands.ShooterCommand;
 import frc.robot.commands.ShooterLoopCommand;
 import frc.robot.Constants.ShooterConstants;
+import frc.robot.Constants.VisionConstants;
+
 import frc.robot.commands.ConveyorCommand;
 import frc.robot.subsystems.Conveyor;
 
@@ -46,35 +52,41 @@ public class RobotContainer {
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
     
     //Subsystem
-    private final Intake intakeSubsystem = new Intake();
+    private final Intake intake = new Intake();
     private final Shooter shooter = new Shooter();
     private final Conveyor conveyor = new Conveyor();
 
-    //Commands
-    private final IntakeArmCommand moveUp = new IntakeArmCommand(intakeSubsystem, Constants.IntakeArmConstants.speed);
-    private final IntakeArmCommand moveDown = new IntakeArmCommand(intakeSubsystem, -Constants.IntakeArmConstants.speed);
-    private final IntakeCommand runIntake = new IntakeCommand(intakeSubsystem, Constants.IntakeConstants.SPEED);
-    private final ConveyorCommand runConveyor = new ConveyorCommand(conveyor, Constants.ShooterConstants.conveyorSpeed);
+    //Commands``````````````````
+    private final IntakeArmCommand moveUp = new IntakeArmCommand(intake, -.2);
+    private final IntakeArmCommand stallArmCommand = new IntakeArmCommand(intake, -0.05);
+    private final IntakeArmCommand moveDown = new IntakeArmCommand(intake,.1);
+    private final IntakeCommand runIntake = new IntakeCommand(intake, Constants.IntakeConstants.SPEED);
+    private final ConveyorCommand runConveyor = new ConveyorCommand(conveyor, -Constants.ShooterConstants.conveyorSpeed);
     private final ShooterCommand runShooter = new ShooterCommand(shooter, .5);
     private final ShooterLoopCommand runShooterWithLoop = new ShooterLoopCommand(shooter, Constants.ShooterConstants.rpm);
-
+    private final LimelightHelpers limelight = new LimelightHelpers();
+    
     public RobotContainer() {
         configureBindings();
     }
 
     private void configureBindings() {
         //Swerve Buttons
+
         drivetrain.setDefaultCommand(
-            drivetrain.applyRequest(() ->
-                drive.withVelocityX(-joystick.getLeftY() * MaxSpeed)
-                    .withVelocityY(-joystick.getLeftX() * MaxSpeed)
-                    .withRotationalRate(-joystick.getRightX() * MaxAngularRate)
-            )
-        );
+    drivetrain.applyRequest(() ->
+        drive.withVelocityX(-joystick.getLeftY() * MaxSpeed)
+             .withVelocityY(-joystick.getLeftX() * MaxSpeed)
+             .withRotationalRate(-joystick.getRightX() * MaxAngularRate)
+    )
+);
+        joystick.rightBumper().whileTrue(drivetrain.applyRequest(() -> drive.withVelocityX(LimelightHelpers.getTY("limelight") * -0.1).withVelocityY(joystick.getLeftX() * MaxSpeed).withRotationalRate(LimelightHelpers.getTX("limelight") * -0.05)));
+        intake.setDefaultCommand(stallArmCommand);
 
         joystick.leftBumper().onTrue(
             new InstantCommand(() -> drivetrain.getPigeon2().setYaw(0), drivetrain)
         );
+
 
 
         final var idle = new SwerveRequest.Idle();
@@ -85,61 +97,32 @@ public class RobotContainer {
         drivetrain.registerTelemetry(logger::telemeterize);
 
         //Intake Buttons
+        
+        //shooter
+        // joystick.b().toggleOnTrue(runConveyor);
+        // joystick.y().toggleOnTrue(runShooterWithLoop);
+        //joystick.x().toggleOnTrue(shootSequenceTwo());
+
+        //joystick.rightBumper().whileTrue(new InstantCommand(() -> shooter.setShooterSpeed(.5), shooter));
+        joystick.x().toggleOnTrue(shootSequenceOneCommand());
+
+        //joystick.povUp().toggleOnTrue(new SequentialCommandGroup(new InstantCommand(() -> shooter.setVelocity(ShooterConstants.rpm), new WaitUntilCommand(() -> shooter.atSpeed()), new InstantCommand(shooter.setConveyorSpeed(.4), shooter))));
+
         joystick.rightTrigger().whileTrue(moveUp);
         joystick.leftTrigger().whileTrue(moveDown);
         joystick.a().toggleOnTrue(runIntake);
 
-        //shooter
-        joystick.b().toggleOnTrue(runConveyor);
-        joystick.y().toggleOnTrue(runShooter);
-        joystick.x().toggleOnTrue(shootSequenceTwo());
-
-        //joystick.x().whileTrue(new InstantCommand(() -> shooter.setBothSpeed(-.5, .3), shooter)).whileFalse(new InstantCommand(() -> shooter.setBothSpeed(0, 0), shooter));
-        //joystick.rightBumper().whileTrue(new InstantCommand(() -> shooter.setShooterSpeed(.5), shooter));
-        //joystick.x().toggleOnTrue(shootSequenceTwo());
-        //joystick.povUp().toggleOnTrue(new SequentialCommandGroup(new InstantCommand(() -> shooter.setVelocity(ShooterConstants.rpm), new WaitUntilCommand(() -> shooter.atSpeed()), new InstantCommand(shooter.setConveyorSpeed(.4), shooter))));
-
     }
-    /*public Command shootSequence() {
-        // 1. A command to set the shooter to a desired speed and keep it running
-        //    until the whole sequence is finished. This should require the shooter subsystem.
-        Command setShooterSpeed = Commands.startEnd(
-            () -> shooter.setShooterSpeed(-.5),
-            () -> shooter.setShooterSpeed(0), // Stop the shooter when the command group ends
-           shooter
-        );
 
-        // 2. A command that waits until the shooter is on target speed. 
-        //    This condition is checked periodically via the isFinished() method.
-        Command waitUntilOnSpeed = new WaitUntilCommand(() -> shooter.atSpeed());
-
-        // 3. A command to run the conveyor, which should require the conveyor subsystem.
-        //    This command should run for a certain duration (e.g., 2 seconds) or until 
-        //    a sensor indicates the ball has been shot.
-
-        Command runConveyor = Commands.startEnd(
-            () -> shooter.setConveyorSpeed(.4),
-            () -> shooter.setConveyorSpeed(0),
-            shooter
-        ).withTimeout(2.0); // Adjust the timeout as needed, or use a sensor check
-
-        // 4. Combine the commands in sequence using andThen().
-        //    The `setShooterSpeed` command runs first and stays running (because it doesn't
-        //    end on its own) while the `waitUntilOnSpeed` command waits.
-        //    Once `waitUntilOnSpeed` finishes, the `runConveyor` command starts.
-        //    You will need to ensure that `setShooterSpeed` and `runConveyor` can run 
-        //    at the same time without conflicting requirements.
-
-        return setShooterSpeed.andThen(waitUntilOnSpeed).andThen(runConveyor);
-    }
-*/
-public Command shootSequenceTwo() {
+/////
+public Command shootSequenceOneCommand() {
     return Commands.sequence(
         Commands.runOnce(() -> shooter.setVelocity(-ShooterConstants.rpm), shooter),
         Commands.waitUntil(shooter::atSpeed),
+        Commands.waitSeconds(.5),
         Commands.parallel(
             Commands.run(() -> shooter.setVelocity(-ShooterConstants.rpm), shooter),
-            Commands.run(() -> conveyor.setSpeed(0.5), conveyor)
+            Commands.run(() -> conveyor.setSpeed(-0.25), conveyor)
         ).finallyDo(interrupted -> {
             conveyor.setSpeed(0);
             shooter.setVelocity(0);
@@ -147,16 +130,14 @@ public Command shootSequenceTwo() {
     );
 }
 
+public Command stallSecquenceCommand() {
+    return Commands.sequence(
+        Commands.runOnce(() -> intake.setArmSpeed(.1)),Commands.waitSeconds(0.15),Commands.runOnce(() ->intake.setArmSpeed(-0.075))
+    );
+}
+
+
     public Command getAutonomousCommand() {
-        final var idle = new SwerveRequest.Idle();
-        return drivetrain.runOnce(() -> drivetrain.seedFieldCentric(Rotation2d.kZero))
-            .andThen(
-                drivetrain.applyRequest(() ->
-                    drive.withVelocityX(0.5)
-                        .withVelocityY(0)
-                        .withRotationalRate(0)
-                ).withTimeout(5.0)
-            )
-            .andThen(drivetrain.applyRequest(() -> idle));
+        return shootSequenceOneCommand();
     }
 }

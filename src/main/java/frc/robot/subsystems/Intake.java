@@ -42,8 +42,11 @@ public class Intake extends SubsystemBase{
    
    private SparkFlex leader = new SparkFlex(14, MotorType.kBrushless);
    private SparkFlex follower = new SparkFlex(15, MotorType.kBrushless);
-   private final TalonFX intakeMotor = new TalonFX(IntakeConstants.motorID);
+   //private final TalonFX intakeMotor = new TalonFX(IntakeConstants.motorID);
 
+
+   private SparkFlex intakeLead = new SparkFlex(20, MotorType.kBrushless);
+   private SparkFlex intakeFollow = new SparkFlex(21, MotorType.kBrushless);
 
    SparkClosedLoopController m_controller = leader.getClosedLoopController();
    double setPoint = 0;
@@ -64,8 +67,8 @@ public class Intake extends SubsystemBase{
    );
 
 
-    public void runIntake() {
-        intakeMotor.set(IntakeConstants.SPEED);
+    public void setIntakeSpeed(double speed) {
+        intakeLead.set(speed);
     }
    
 
@@ -85,6 +88,11 @@ public class Intake extends SubsystemBase{
       SparkFlexConfig followerConfig = new SparkFlexConfig();
       followerConfig.follow(leader, true);
 
+
+      SparkFlexConfig intakeLeadConfig = new SparkFlexConfig();
+      SparkFlexConfig intakeFollowConfig = new SparkFlexConfig();
+
+      intakeFollowConfig.follow(intakeLead, true);
 
       /*leaderConfig.closedLoop
       .p(0)
@@ -107,6 +115,10 @@ public class Intake extends SubsystemBase{
          /* /* */
       leader.configure(leaderConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
       follower.configure(followerConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+
+      intakeLead.configure(intakeLeadConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+      intakeFollow.configure(intakeFollowConfig,  ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+
 }
    
    public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
@@ -116,9 +128,13 @@ public class Intake extends SubsystemBase{
    public Command sysIdDynamic(SysIdRoutine.Direction direction) {
       return sysIdRoutine.dynamic(direction);
    }
-  public void setSpeed(double speed)
-  {
-      intakeMotor.set(speed);
+//   public void setSpeed(double speed)
+//   {
+//       intakeMotor.set(speed);
+//   }
+
+  public void setArmSpeed(double speed){
+   leader.set(speed);
   }
 
   public void setPosition()

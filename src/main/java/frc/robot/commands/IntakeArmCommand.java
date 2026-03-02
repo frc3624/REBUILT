@@ -16,12 +16,12 @@ public class IntakeArmCommand extends Command {
 
     @Override
     public void execute() {
-        intake.setSpeed(speed);
+        intake.setArmSpeed(speed);
     }
 
     @Override
     public void end(boolean interrupted) {
-        intake.setSpeed(0);
+        intake.setArmSpeed(0);
     }
 
     @Override

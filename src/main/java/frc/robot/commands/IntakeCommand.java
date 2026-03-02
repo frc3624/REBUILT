@@ -16,12 +16,12 @@ public class IntakeCommand extends Command {
 
     @Override
     public void initialize() {
-        intake.setSpeed(speed);
+        intake.setIntakeSpeed(speed);
     }
 
     @Override
     public void end(boolean interrupted) {
-        intake.setSpeed(0);
+        intake.setIntakeSpeed(0);
     }
 
     @Override
