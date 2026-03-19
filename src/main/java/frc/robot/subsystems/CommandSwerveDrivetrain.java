@@ -3,6 +3,7 @@ package frc.robot.subsystems;
 import static edu.wpi.first.units.Units.*;
 
 import java.util.Optional;
+import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
 import com.ctre.phoenix6.SignalLogger;
@@ -14,8 +15,10 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
@@ -28,10 +31,21 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj2.command.Command;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
- 
-
+import edu.wpi.first.units.Units;
+import frc.robot.generated.TunerConstants;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 import frc.robot.util.LimelightHelpers;
+
+// Add this import at the top
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.config.RobotConfig;
+import com.pathplanner.lib.controllers.PPHolonomicDriveController;
+import com.pathplanner.lib.config.PIDConstants;
+import com.pathplanner.lib.commands.PathPlannerAuto;
+
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import frc.robot.subsystems.DriveConstants;
+import java.util.function.Supplier;
 
 /**
  * Class that extends the Phoenix 6 SwerveDrivetrain class and implements
@@ -56,6 +70,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization = new SwerveRequest.SysIdSwerveTranslation();
     private final SwerveRequest.SysIdSwerveSteerGains m_steerCharacterization = new SwerveRequest.SysIdSwerveSteerGains();
     private final SwerveRequest.SysIdSwerveRotation m_rotationCharacterization = new SwerveRequest.SysIdSwerveRotation();
+    private final SwerveRequest.FieldCentric alignRequest = new SwerveRequest.FieldCentric()
+    .withDeadband(DriveConstants.maxSpeed * 0.1)
+    .withDriveRequestType(DriveRequestType.OpenLoopVoltage);
 
     /* SysId routine for characterizing translation. This is used to find PID gains for the drive motors. */
     private final SysIdRoutine m_sysIdRoutineTranslation = new SysIdRoutine(
@@ -76,7 +93,52 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
 
     
+public Distance getShotDistance(Translation2d targetPose) {
+    Pose2d drivePose = getState().Pose;
+    double centerToTargetMeters = drivePose.getTranslation().getDistance(targetPose);
+    double centerToShooterMeters = DriveConstants.shooterSideOffset.in(Units.Meters);
+    double shooterToTargetMeters = Math.sqrt(Math.pow(centerToTargetMeters, 2.0) - Math.pow(centerToShooterMeters, 2.0));
+    return Units.Meters.of(shooterToTargetMeters);
+}
 
+public Distance getShotDistance() {
+    return getShotDistance(DriveConstants.getHubPose().toPose2d().getTranslation());
+}
+
+public Distance getFerryDistance() {
+    return getShotDistance(DriveConstants.getFerryPose(getState().Pose.getTranslation()).toPose2d().getTranslation());
+}
+
+public Command alignDrive(CommandXboxController controller, Supplier<Pose2d> targetPoseSupplier) {
+    return applyRequest(() -> {
+        double controllerVelX = -controller.getLeftY();
+        double controllerVelY = -controller.getLeftX();
+
+        Pose2d drivePose = getState().Pose;
+        Pose2d targetPose = targetPoseSupplier.get();
+        double shooterOffset = -DriveConstants.shooterSideOffset.in(Units.Meters);
+        double targetDistance = drivePose.getTranslation().getDistance(targetPose.getTranslation());
+        double shooterAngleRads = Math.acos(shooterOffset / targetDistance);
+        Rotation2d shooterAngle = Rotation2d.fromRadians(shooterAngleRads);
+        Rotation2d offsetAngle = Rotation2d.kCCW_90deg.minus(shooterAngle);
+        Rotation2d shooterAngleOffset = Rotation2d.fromDegrees(2);
+        Rotation2d desiredAngle = offsetAngle.plus(drivePose.relativeTo(targetPose).getTranslation().getAngle()).plus(Rotation2d.k180deg).plus(shooterAngleOffset);
+        Rotation2d currentAngle = drivePose.getRotation();
+        Rotation2d deltaAngle = currentAngle.minus(desiredAngle);
+        double wrappedAngleDeg = MathUtil.inputModulus(deltaAngle.getDegrees(), -180.0, 180.0);
+
+        if ((Math.abs(wrappedAngleDeg) < DriveConstants.epsilonAngleToGoal.in(Units.Degrees))
+                && Math.hypot(controllerVelX, controllerVelY) < 0.1) {
+            return new SwerveRequest.SwerveDriveBrake();
+        } else {
+            double rotationalRate = DriveConstants.rotationController.calculate(currentAngle.getRadians(), desiredAngle.getRadians());
+            return alignRequest
+                .withVelocityX(controllerVelX * DriveConstants.maxSpeed)
+                .withVelocityY(-controller.getLeftX() * DriveConstants.maxSpeed)
+                .withRotationalRate(-rotationalRate * DriveConstants.maxAngularRate);
+        }
+    });
+}
     /* SysId routine for characterizing steer. This is used to find PID gains for the steer motors. */
     private final SysIdRoutine m_sysIdRoutineSteer = new SysIdRoutine(
         new SysIdRoutine.Config(
@@ -163,8 +225,40 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
         }).withName("FollowAprilTag");
     }
+            
+public Command driveWithAutoRotation(DoubleSupplier translationX, DoubleSupplier translationY) {
+    final double  MaxSpeed = 1.0 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
+    final double MaxAngularRate = RotationsPerSecond.of(2).in(RadiansPerSecond);
+    final String LIMELIGHT_NAME = "limelight";
+    final double kTurnP = 0.03;
+
+    final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
+        .withDriveRequestType(DriveRequestType.OpenLoopVoltage)
+        .withDeadband(MaxSpeed * 0.1)
+        .withRotationalDeadband(MaxAngularRate * 0.1);
+
+    return run(() -> {
+       
+        double xSpeed = translationX.getAsDouble() * MaxSpeed;
+        double ySpeed = translationY.getAsDouble() * MaxSpeed;
+
+      
+        Translation2d scaledTranslation = new Translation2d(xSpeed, ySpeed).times(0.8);
+
         
-    
+        double rotation = 0.0;
+        if (LimelightHelpers.getTV(LIMELIGHT_NAME)) {
+            double tx = LimelightHelpers.getTX(LIMELIGHT_NAME);
+            rotation = MathUtil.clamp(tx * kTurnP, -2.5, 2.5);
+        }
+
+        setControl(drive
+            .withVelocityX(scaledTranslation.getX())
+            .withVelocityY(scaledTranslation.getY())
+            .withRotationalRate(rotation));
+
+    }).withName("DriveWithAutoRotation");
+}    
      private final SysIdRoutine m_sysIdRoutineRotation = new SysIdRoutine(
         new SysIdRoutine.Config(
             /* This is in radians per second², but SysId only supports "volts per second" */
@@ -201,15 +295,52 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
      * @param modules               Constants for each specific module
      */
     public CommandSwerveDrivetrain(
-        SwerveDrivetrainConstants drivetrainConstants,
-        SwerveModuleConstants<?, ?, ?>... modules
-    ) {
-        super(drivetrainConstants, modules);
-        if (Utils.isSimulation()) {
-            startSimThread();
-        }
+    SwerveDrivetrainConstants drivetrainConstants,
+    SwerveModuleConstants<?, ?, ?>... modules
+) {
+    super(drivetrainConstants, modules);
+    if (Utils.isSimulation()) {
+        startSimThread();
     }
-    
+    configurePathPlanner();  // ADD THIS
+}
+    private void configurePathPlanner() {
+    RobotConfig config;
+    try {
+        config = RobotConfig.fromGUISettings();
+    } catch (Exception e) {
+        e.printStackTrace();
+        return;
+    }
+
+    AutoBuilder.configure(
+        () -> getState().Pose,                          // Pose supplier
+        this::resetPose,                                // Reset pose
+        () -> getState().Speeds,                        // ChassisSpeeds supplier
+        (speeds, feedforwards) -> setControl(           // Drive output
+            new SwerveRequest.ApplyRobotSpeeds()
+                .withSpeeds(speeds)
+                .withWheelForceFeedforwardsX(feedforwards.robotRelativeForcesXNewtons())
+                .withWheelForceFeedforwardsY(feedforwards.robotRelativeForcesYNewtons())
+        ),
+        new PPHolonomicDriveController(
+            new PIDConstants(5.0, 0, 0),   // Translation PID
+            new PIDConstants(5.0, 0, 0)    // Rotation PID
+        ),
+        config,
+        () -> {
+            // Flip path for red alliance
+            var alliance = DriverStation.getAlliance();
+            return alliance.isPresent() && alliance.get() == DriverStation.Alliance.Red;
+        },
+        this
+    );
+}
+
+public Command getAutonomousCommand(String autoName) {
+    return new PathPlannerAuto(autoName);
+}
+
 
     /**
      * Constructs a CTRE SwerveDrivetrain using the specified constants.

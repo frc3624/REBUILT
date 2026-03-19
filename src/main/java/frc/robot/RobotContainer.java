@@ -15,6 +15,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
@@ -26,7 +27,6 @@ import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Shooter;
 import frc.robot.util.LimelightHelpers;
-import frc.robot.commands.IntakeArmCommand;
 import frc.robot.commands.IntakeCommand;
 import frc.robot.commands.ShooterCommand;
 import frc.robot.commands.ShooterLoopCommand;
@@ -35,6 +35,13 @@ import frc.robot.Constants.VisionConstants;
 
 import frc.robot.commands.ConveyorCommand;
 import frc.robot.subsystems.Conveyor;
+import frc.robot.subsystems.DriveConstants;
+import frc.robot.commands.armCommand;
+// Add imports
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.auto.NamedCommands;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class RobotContainer {
     //Swerve Stuff
@@ -57,19 +64,49 @@ public class RobotContainer {
     private final Conveyor conveyor = new Conveyor();
 
     //Commands``````````````````
-    private final IntakeArmCommand moveUp = new IntakeArmCommand(intake, -.2);
-    private final IntakeArmCommand stallArmCommand = new IntakeArmCommand(intake, -0.05);
-    private final IntakeArmCommand moveDown = new IntakeArmCommand(intake,.1);
+
     private final IntakeCommand runIntake = new IntakeCommand(intake, Constants.IntakeConstants.SPEED);
     private final ConveyorCommand runConveyor = new ConveyorCommand(conveyor, -Constants.ShooterConstants.conveyorSpeed);
     private final ShooterCommand runShooter = new ShooterCommand(shooter, .5);
     private final ShooterLoopCommand runShooterWithLoop = new ShooterLoopCommand(shooter, Constants.ShooterConstants.rpm);
     private final LimelightHelpers limelight = new LimelightHelpers();
-    
+
+    private final armCommand moveUp = new armCommand(intake, 0.1, 0);
+    private final armCommand moveDown = new armCommand(intake, -0.1, -79);
+        double kP_Distance = 0.1; // Tuning constant for forward speed
+    double TARGET_TY = -7.57;//The 'ty' value when you are at the perfect distance
+    double kP_Rotation = 0.4;
+
+    double TARGET2_TY = -4;
+    //private final SendableChooser<Command> autoChooser;  // ADD THIS
+    Command align = drivetrain.applyRequest(() -> {
+        // 1. Calculate the 'distance error'
+        // If you are at the right spot, error = 0, so velocityX = 0
+        double distanceError = LimelightHelpers.getTY("limelight") - TARGET_TY;
+
+        /*if (distanceError < .01){
+            //return drive.withVelocityX(0)
+        return drive.withVelocityX(joystick.getRightX() * MaxSpeed)
+                    .withVelocityY(0)
+                    .withRotationalRate(LimelightHelpers.getTX("limelight") * kP_Rotation);
+        }*/
+        // 2. Drive with velocity relative to the error
+        //return drive.withVelocityX(LimelightHelpers.getTY("limelight") * kP_Distance)
+        return drive.withVelocityX(distanceError * kP_Distance * MaxSpeed)
+                    .withVelocityY(joystick.getLeftX() * MaxSpeed)
+                    .withRotationalRate((LimelightHelpers.getTX("limelight") +6) * kP_Rotation);
+    });
     public RobotContainer() {
         configureBindings();
-    }
+        drivetrain.getPigeon2().setYaw(180);
 
+        // Register named commands BEFORE building chooser
+        NamedCommands.registerCommand("Shoot", shootSequenceOneCommand());
+        NamedCommands.registerCommand("RunIntake", new IntakeCommand(intake, Constants.IntakeConstants.SPEED));
+        NamedCommands.registerCommand("align", align);
+        //autoChooser = AutoBuilder.buildAutoChooser();  // ADD THIS
+        //SmartDashboard.putData("Auto Chooser", autoChooser);  // ADD THIS
+    }
     private void configureBindings() {
         //Swerve Buttons
 
@@ -80,8 +117,49 @@ public class RobotContainer {
              .withRotationalRate(-joystick.getRightX() * MaxAngularRate)
     )
 );
-        joystick.rightBumper().whileTrue(drivetrain.applyRequest(() -> drive.withVelocityX(LimelightHelpers.getTY("limelight") * -0.1).withVelocityY(joystick.getLeftX() * MaxSpeed).withRotationalRate(LimelightHelpers.getTX("limelight") * -0.05)));
-        intake.setDefaultCommand(stallArmCommand);
+
+//intake.setDefaultCommand(Commands.runOnce(() -> intake.runFeedFoward(), intake));
+
+// Constants - Adjust these for your robot's physical mounting
+
+    joystick.rightBumper().whileTrue(drivetrain.applyRequest(() -> {
+        // 1. Calculate the 'distance error'
+        // If you are at the right spot, error = 0, so velocityX = 0
+        double distanceError = LimelightHelpers.getTY("limelight") - TARGET_TY;
+
+        /*if (distanceError < .01){
+            //return drive.withVelocityX(0)
+        return drive.withVelocityX(joystick.getRightX() * MaxSpeed)
+                    .withVelocityY(0)
+                    .withRotationalRate(LimelightHelpers.getTX("limelight") * kP_Rotation);
+        }*/
+        // 2. Drive with velocity relative to the error
+        //return drive.withVelocityX(LimelightHelpers.getTY("limelight") * kP_Distance)
+        return drive.withVelocityX(distanceError * kP_Distance * MaxSpeed)
+                    .withVelocityY(joystick.getLeftX() * MaxSpeed)
+                    .withRotationalRate((LimelightHelpers.getTX("limelight") +6) * kP_Rotation);
+    }));
+        
+        joystick.y().whileTrue(drivetrain.applyRequest(() -> {
+        // 1. Calculate the 'distance error'
+        // If you are at the right spot, error = 0, so velocityX = 0
+        double distanceError = LimelightHelpers.getTY("limelight") - TARGET2_TY;
+
+        /*if (distanceError < .01){
+            //return drive.withVelocityX(0)
+        return drive.withVelocityX(joystick.getRightX() * MaxSpeed)
+                    .withVelocityY(0)
+                    .withRotationalRate(LimelightHelpers.getTX("limelight") * kP_Rotation);
+        }*/
+        // 2. Drive with velocity relative to the error
+        //return drive.withVelocityX(LimelightHelpers.getTY("limelight") * kP_Distance)
+        return drive.withVelocityX(distanceError * kP_Distance * MaxSpeed)
+                    .withVelocityY(joystick.getLeftX() * MaxSpeed)
+                    .withRotationalRate((LimelightHelpers.getTX("limelight") +6) * kP_Rotation);
+    }));
+    //joystick.rightBumper().whileTrue(drivetrain.alignDrive(joystick, () -> DriveConstants.getHubPose().toPose2d()));
+
+
 
         joystick.leftBumper().onTrue(
             new InstantCommand(() -> drivetrain.getPigeon2().setYaw(0), drivetrain)
@@ -108,10 +186,14 @@ public class RobotContainer {
 
         //joystick.povUp().toggleOnTrue(new SequentialCommandGroup(new InstantCommand(() -> shooter.setVelocity(ShooterConstants.rpm), new WaitUntilCommand(() -> shooter.atSpeed()), new InstantCommand(shooter.setConveyorSpeed(.4), shooter))));
 
-        joystick.rightTrigger().whileTrue(moveUp);
-        joystick.leftTrigger().whileTrue(moveDown);
-        joystick.a().toggleOnTrue(runIntake);
 
+        joystick.leftTrigger().whileTrue(stallSecquenceCommand()).whileFalse(Commands.runOnce( ()-> intake.setArmSpeed(0)));
+        joystick.rightTrigger().whileTrue(Commands.runOnce( ()-> intake.setArmSpeed(0.1))).whileFalse(Commands.runOnce( ()-> intake.setArmSpeed(0)));
+        //joystick.leftTrigger().toggleOnTrue(Commands.runOnce(() -> intake.setPosition(0)));
+        
+        //joystick.leftTrigger().toggleOnTrue(moveDown);
+        //joystick.rightTrigger().toggleOnTrue(moveUp);
+        joystick.a().toggleOnTrue(runIntake);
     }
 
 /////
@@ -122,22 +204,25 @@ public Command shootSequenceOneCommand() {
         Commands.waitSeconds(.5),
         Commands.parallel(
             Commands.run(() -> shooter.setVelocity(-ShooterConstants.rpm), shooter),
-            Commands.run(() -> conveyor.setSpeed(-0.25), conveyor)
+            Commands.run(() -> conveyor.setVelocity(-4000, .25), conveyor)
         ).finallyDo(interrupted -> {
-            conveyor.setSpeed(0);
+            conveyor.setSpeed(0, 0);
+
             shooter.setVelocity(0);
         })
     );
 }
 
+
 public Command stallSecquenceCommand() {
-    return Commands.sequence(
-        Commands.runOnce(() -> intake.setArmSpeed(.1)),Commands.waitSeconds(0.15),Commands.runOnce(() ->intake.setArmSpeed(-0.075))
-    );
-}
+     return Commands.sequence(
+         Commands.runOnce(() -> intake.setArmSpeed(-.1)),Commands.waitSeconds(0.285),Commands.runOnce(() ->intake.setArmSpeed(0.0005))
+     );
+ }
 
 
     public Command getAutonomousCommand() {
-        return shootSequenceOneCommand();
+        return drivetrain.getAutonomousCommand("LeftShootDepot");
     }
+    
 }

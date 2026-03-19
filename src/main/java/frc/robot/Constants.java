@@ -131,8 +131,8 @@ public final class Constants
 
   }
     public static final class IntakeConstants {
-        public static final int motorID = 16;     
-        public static final double SPEED = 0.15;    
+        public static final int motorID = 20;     
+        public static final double SPEED = -0.35;
     }
     public static final class IntakeArmConstants {
     public static final double speed = 0.05;
@@ -140,21 +140,28 @@ public final class Constants
 
     }
     public static final class ShooterConstants{
-      public static final double conveyorSpeed = .5;
+      public static final double conveyorSpeed = .75;
       public static final int conveyorID = 17;
+      public static final int followConveyorID = 22;
       public static final int leadShooterID = 18;
       public static final int followShooterID = 19; 
 
       public static final int kCurrentLimit = 80;
       public static final int kVoltageComp = 11;
-      public static final int kToleranceRPM = 15;
-      public static final int rpm = 3000;
+      public static final int kToleranceRPM = 20;
+      public static final int rpm = 2750;
 
       
-      public static final double kP= 0.0008;
+      public static final double kP= 0.001;
       public static final double kI= 0.0;
       public static final double kD = 0.0;
       public static final double kFF = 0.000167;
+
+      public static final double kCP = 0.00001;
+      public static final double kCI = 0;
+      public static final double kCD= 0;
+      public static final double kCFF = 0.000175;
+
 
     }
     

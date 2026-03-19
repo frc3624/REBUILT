@@ -19,35 +19,58 @@ import frc.robot.Constants.ShooterConstants;
 public class Conveyor extends SubsystemBase {
  
     private final SparkFlex conveyor = new SparkFlex(ShooterConstants.conveyorID, MotorType.kBrushless);
- 
+    private final SparkFlex followConveyor = new SparkFlex(ShooterConstants.followConveyorID, MotorType.kBrushless);
+    private final SparkFlex preIndexer = new SparkFlex(23, MotorType.kBrushless);
+
     private final RelativeEncoder encoder;
-    
+    private final SparkClosedLoopController pidController;
  
     private double targetRPM = 0;
  
     public Conveyor() {
         SparkFlexConfig leaderConfig = new SparkFlexConfig();
+        SparkFlexConfig followConfig = new SparkFlexConfig();
+        SparkFlexConfig indexConfig = new SparkFlexConfig();
+        leaderConfig.closedLoop
+              .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
+              .pid(ShooterConstants.kCP, ShooterConstants.kCI, ShooterConstants.kCD).feedForward
+              .kV(ShooterConstants.kCFF);
+       pidController = conveyor.getClosedLoopController();
  
+
         leaderConfig.idleMode(IdleMode.kCoast)
               .smartCurrentLimit(ShooterConstants.kCurrentLimit)
               .voltageCompensation(ShooterConstants.kVoltageComp)
               .inverted(false);
- 
+        indexConfig.idleMode(IdleMode.kCoast)
+              .smartCurrentLimit(ShooterConstants.kCurrentLimit)
+              .voltageCompensation(ShooterConstants.kVoltageComp)
+              .inverted(false);
         // Configure PIDF for velocity control
-     
- 
+        //indexConfig.follow(ShooterConstants.conveyorID, true);
+        followConfig.follow(ShooterConstants.conveyorID, true);
         
-            conveyor.configure(leaderConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-      
- 
+
+        conveyor.configure(leaderConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+        followConveyor.configure(followConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+        preIndexer.configure(indexConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
         // Get encoder and PID controller
         encoder = conveyor.getEncoder();
         
+        
+    }
+
+     public void setVelocity(double rpm, double speed) {
+        targetRPM = rpm;
+        pidController.setSetpoint(targetRPM, ControlType.kVelocity);
+        preIndexer.set(speed);
     }
     
-    public void setSpeed(double speed1){
+    public void setSpeed(double speed1, double speed2){
         conveyor.set(speed1);
+        preIndexer.set(speed2);
     }
+
 
     public void configureMotors(){
       SparkFlexConfig leaderConfig = new SparkFlexConfig();

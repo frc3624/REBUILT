@@ -18,12 +18,12 @@ public class ConveyorCommand extends Command {
 
     @Override
     public void initialize() {
-        conveyor.setSpeed(-speed);
+        conveyor.setSpeed(-speed, 0.25);
     }
 
     @Override
     public void end(boolean interrupted) {
-        conveyor.setSpeed(0);
+        conveyor.setSpeed(0, 0);
     }
 
     @Override
