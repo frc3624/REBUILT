@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import com.revrobotics.spark.config.MAXMotionConfig;
+import com.revrobotics.spark.config.SparkBaseConfig;
 import com.revrobotics.spark.config.MAXMotionConfig.MAXMotionPositionMode;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
@@ -108,6 +109,9 @@ private static final double allowedError = 1.0;  // degrees
       SparkFlexConfig intakeFollowConfig = new SparkFlexConfig();
 
       intakeFollowConfig.follow(intakeLead, true);
+
+      intakeLeadConfig.idleMode(SparkBaseConfig.IdleMode.kCoast);
+      followerConfig.idleMode(SparkBaseConfig.IdleMode.kCoast);
 
       
       leader.configure(leaderConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);

@@ -324,8 +324,8 @@ public Command driveWithAutoRotation(DoubleSupplier translationX, DoubleSupplier
                 .withWheelForceFeedforwardsY(feedforwards.robotRelativeForcesYNewtons())
         ),
         new PPHolonomicDriveController(
-            new PIDConstants(5.0, 0, 0),   // Translation PID
-            new PIDConstants(5.0, 0, 0)    // Rotation PID
+            new PIDConstants(8.0, 0, 0),   // Translation PID
+            new PIDConstants(8.0, 0, 0)    // Rotation PID
         ),
         config,
         () -> {

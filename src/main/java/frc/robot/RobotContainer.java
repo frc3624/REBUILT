@@ -33,15 +33,15 @@ import frc.robot.commands.ShooterLoopCommand;
 import frc.robot.Constants.ShooterConstants;
 import frc.robot.Constants.VisionConstants;
 
-import frc.robot.commands.ConveyorCommand;
 import frc.robot.subsystems.Conveyor;
 import frc.robot.subsystems.DriveConstants;
-import frc.robot.commands.armCommand;
 // Add imports
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.GenericHID;
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 
 public class RobotContainer {
     //Swerve Stuff
@@ -66,44 +66,55 @@ public class RobotContainer {
     //Commands``````````````````
 
     private final IntakeCommand runIntake = new IntakeCommand(intake, Constants.IntakeConstants.SPEED);
-    private final ConveyorCommand runConveyor = new ConveyorCommand(conveyor, -Constants.ShooterConstants.conveyorSpeed);
+    /*private final ConveyorCommand runConveyor = new ConveyorCommand(conveyor, -Constants.ShooterConstants.conveyorSpeed);
     private final ShooterCommand runShooter = new ShooterCommand(shooter, .5);
-    private final ShooterLoopCommand runShooterWithLoop = new ShooterLoopCommand(shooter, Constants.ShooterConstants.rpm);
+    private final ShooterLoopCommand runShooterWithLoop = new ShooterLoopCommand(shooter, Constants.ShooterConstants.rpm);*/
     private final LimelightHelpers limelight = new LimelightHelpers();
 
-    private final armCommand moveUp = new armCommand(intake, 0.1, 0);
-    private final armCommand moveDown = new armCommand(intake, -0.1, -79);
         double kP_Distance = 0.1; // Tuning constant for forward speed
     double TARGET_TY = -7.57;//The 'ty' value when you are at the perfect distance
     double kP_Rotation = 0.4;
 
-    double TARGET2_TY = -4;
+    double TARGET2_TY = -3.8;
     //private final SendableChooser<Command> autoChooser;  // ADD THIS
     Command align = drivetrain.applyRequest(() -> {
-        // 1. Calculate the 'distance error'
-        // If you are at the right spot, error = 0, so velocityX = 0
-        double distanceError = LimelightHelpers.getTY("limelight") - TARGET_TY;
-
-        /*if (distanceError < .01){
-            //return drive.withVelocityX(0)
-        return drive.withVelocityX(joystick.getRightX() * MaxSpeed)
+    // No tag -> stop
+    if (!LimelightHelpers.getTV("limelight")) {
+        return drive.withVelocityX(0)
                     .withVelocityY(0)
-                    .withRotationalRate(LimelightHelpers.getTX("limelight") * kP_Rotation);
-        }*/
-        // 2. Drive with velocity relative to the error
-        //return drive.withVelocityX(LimelightHelpers.getTY("limelight") * kP_Distance)
-        return drive.withVelocityX(distanceError * kP_Distance * MaxSpeed)
-                    .withVelocityY(joystick.getLeftX() * MaxSpeed)
-                    .withRotationalRate((LimelightHelpers.getTX("limelight") +6) * kP_Rotation);
-    });
+                    .withRotationalRate(0);
+    }
+
+    double tx = LimelightHelpers.getTX("limelight");
+    double ty = LimelightHelpers.getTY("limelight");
+
+    double distanceError = ty - TARGET_TY;
+    double rotationError = tx + 6; // if your offset is intentional
+
+    return drive.withVelocityX(distanceError * kP_Distance * (MaxSpeed-10))
+                .withVelocityY(0)
+                .withRotationalRate(rotationError * kP_Rotation);
+})
+.until(() -> {
+    if (!LimelightHelpers.getTV("limelight")) {
+        return false; // don't finish if no target
+    }
+
+    double tx = LimelightHelpers.getTX("limelight");
+    double ty = LimelightHelpers.getTY("limelight");
+
+    return Math.abs(tx + 6) < 1.0   // rotation tolerance
+        && Math.abs(ty - TARGET_TY) < 0.8; // distance tolerance
+});
     public RobotContainer() {
         configureBindings();
         drivetrain.getPigeon2().setYaw(180);
 
         // Register named commands BEFORE building chooser
-        NamedCommands.registerCommand("Shoot", shootSequenceOneCommand());
-        NamedCommands.registerCommand("RunIntake", new IntakeCommand(intake, Constants.IntakeConstants.SPEED));
+        NamedCommands.registerCommand("Shoot", shootSequenceOneCommand().withTimeout(2));
+        NamedCommands.registerCommand("RunIntake", new IntakeCommand(intake, Constants.IntakeConstants.SPEED).withTimeout(4));
         NamedCommands.registerCommand("align", align);
+        NamedCommands.registerCommand("intake", new IntakeCommand(intake, Constants.IntakeConstants.SPEED).withTimeout(5));
         //autoChooser = AutoBuilder.buildAutoChooser();  // ADD THIS
         //SmartDashboard.putData("Auto Chooser", autoChooser);  // ADD THIS
     }
@@ -127,17 +138,16 @@ public class RobotContainer {
         // If you are at the right spot, error = 0, so velocityX = 0
         double distanceError = LimelightHelpers.getTY("limelight") - TARGET_TY;
 
-        /*if (distanceError < .01){
-            //return drive.withVelocityX(0)
-        return drive.withVelocityX(joystick.getRightX() * MaxSpeed)
-                    .withVelocityY(0)
-                    .withRotationalRate(LimelightHelpers.getTX("limelight") * kP_Rotation);
-        }*/
-        // 2. Drive with velocity relative to the error
-        //return drive.withVelocityX(LimelightHelpers.getTY("limelight") * kP_Distance)
-        return drive.withVelocityX(distanceError * kP_Distance * MaxSpeed)
+        
+        if (LimelightHelpers.getTV("limelight")){
+            return drive.withVelocityX(distanceError * kP_Distance * (MaxSpeed-5))
                     .withVelocityY(joystick.getLeftX() * MaxSpeed)
                     .withRotationalRate((LimelightHelpers.getTX("limelight") +6) * kP_Rotation);
+        }
+        return drive.withVelocityX(0)
+                    .withVelocityY(0)
+                    .withRotationalRate(0);
+        
     }));
         
         joystick.y().whileTrue(drivetrain.applyRequest(() -> {
@@ -153,9 +163,14 @@ public class RobotContainer {
         }*/
         // 2. Drive with velocity relative to the error
         //return drive.withVelocityX(LimelightHelpers.getTY("limelight") * kP_Distance)
-        return drive.withVelocityX(distanceError * kP_Distance * MaxSpeed)
+        if (LimelightHelpers.getTV("limelight")){
+            return drive.withVelocityX(distanceError * kP_Distance * (MaxSpeed-5))
                     .withVelocityY(joystick.getLeftX() * MaxSpeed)
                     .withRotationalRate((LimelightHelpers.getTX("limelight") +6) * kP_Rotation);
+        }
+        return drive.withVelocityX(0)
+                    .withVelocityY(0)
+                    .withRotationalRate(0);
     }));
     //joystick.rightBumper().whileTrue(drivetrain.alignDrive(joystick, () -> DriveConstants.getHubPose().toPose2d()));
 
@@ -193,23 +208,35 @@ public class RobotContainer {
         
         //joystick.leftTrigger().toggleOnTrue(moveDown);
         //joystick.rightTrigger().toggleOnTrue(moveUp);
-        joystick.a().toggleOnTrue(runIntake);
+   
+        joystick.a().toggleOnTrue(Commands.parallel(runIntake, Commands.runOnce(() -> joystick.setRumble(GenericHID.RumbleType.kRightRumble,1.0))).finallyDo(() -> joystick.setRumble(GenericHID.RumbleType.kRightRumble, 0.0)));
     }
 
 /////
-public Command shootSequenceOneCommand() {
+public Command shootSequenceOneCommand() { 
     return Commands.sequence(
         Commands.runOnce(() -> shooter.setVelocity(-ShooterConstants.rpm), shooter),
         Commands.waitUntil(shooter::atSpeed),
         Commands.waitSeconds(.5),
         Commands.parallel(
             Commands.run(() -> shooter.setVelocity(-ShooterConstants.rpm), shooter),
-            Commands.run(() -> conveyor.setVelocity(-4000, .25), conveyor)
+            Commands.run(() -> conveyor.setVelocity(-4000, .25), conveyor),
+             Commands.runOnce(() -> joystick.setRumble(GenericHID.RumbleType.kLeftRumble, 1.0))
         ).finallyDo(interrupted -> {
             conveyor.setSpeed(0, 0);
-
+            joystick.setRumble(GenericHID.RumbleType.kLeftRumble, 0.0);
             shooter.setVelocity(0);
         })
+    );
+}
+
+
+public Command shootAutoCommand() {
+    return Commands.sequence(
+        Commands.runOnce(() -> shooter.setVelocity(-ShooterConstants.rpm), shooter),
+        Commands.waitUntil(shooter::atSpeed),
+        Commands.waitSeconds(0.5),
+        shootSequenceOneCommand().withTimeout(1.0)
     );
 }
 
@@ -222,7 +249,7 @@ public Command stallSecquenceCommand() {
 
 
     public Command getAutonomousCommand() {
-        return drivetrain.getAutonomousCommand("LeftShootDepot");
+        return drivetrain.getAutonomousCommand("StraightAutoTest");
     }
     
 }

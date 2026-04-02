@@ -17,13 +17,19 @@
               {
                 "type": "named",
                 "data": {
-                  "name": "intake"
+                  "name": "intakedown"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "intakerun"
                 }
               },
               {
                 "type": "path",
                 "data": {
-                  "pathName": "LeftToDepot"
+                  "pathName": "neutral1.1"
                 }
               }
             ]
@@ -32,26 +38,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "DepotToLeft"
+            "pathName": "neutral1.2"
           }
         },
         {
-          "type": "parallel",
+          "type": "named",
           "data": {
-            "commands": [
-              {
-                "type": "named",
-                "data": {
-                  "name": "align"
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "Shoot"
-                }
-              }
-            ]
+            "name": "Shoot"
           }
         }
       ]
