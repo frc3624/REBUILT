@@ -34,37 +34,65 @@ public class Limelight extends SubsystemBase {
     SmartDashboard.putNumber("Limelight Error", distanceError);
   }
 
-  @Override
-  public void periodic() {
-    /*if (enable) {
-      Double targetDistance = LimelightHelpers.getTargetPose3d_CameraSpace(ll).getTranslation().getDistance(new Translation3d());
-      Double confidence = 1 - ((targetDistance - 1) / 6);
-      //LimelightHelpers.Results result =
-        //  LimelightHelpers.getLatestResults(ll).targetingResults;
-      if (result.valid) {
-        botpose = LimelightHelpers.getBotPose2d_wpiBlue(ll);
-        if (field.isPoseWithinArea(botpose)) {
-          if (drivetrain.getState().Pose.getTranslation().getDistance(botpose.getTranslation()) < 0.5
-              || trust
-              || result.targets_Fiducials.length > 1) {
-            drivetrain.addVisionMeasurement(
-                botpose,
-                Timer.getFPGATimestamp()
-                    - (result.latency_capture / 1000.0)
-                    - (result.latency_pipeline / 1000.0),
-                VecBuilder.fill(confidence, confidence, .01));
-          } else {
-            distanceError++;
-            SmartDashboard.putNumber("Limelight Error", distanceError);
-          }
-        } else {
-          fieldError++;
-          SmartDashboard.putNumber("Field Error", fieldError);
-        }
-      }
-    }*/
-  }
+@Override
+public void periodic() {
+    SmartDashboard.putBoolean("LL Periodic Running", true);
 
+    if (!enable) {
+        SmartDashboard.putBoolean("LL Enabled", false);
+        return;
+    }
+    SmartDashboard.putBoolean("LL Enabled", true);
+
+    var driveState = drivetrain.getState();
+    double gyroYawDeg = driveState.Pose.getRotation().getDegrees();
+    double omegaDegPerSec = Math.toDegrees(driveState.Speeds.omegaRadiansPerSecond);
+
+    LimelightHelpers.SetRobotOrientation(ll, gyroYawDeg, 0, 0, 0, 0, 0);
+
+    LimelightHelpers.PoseEstimate estimate =
+        LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(ll);
+    //LimelightHelpers.PoseEstimate estimate = LimelightHelpers.getBotPoseEstimate_wpiBlue(ll);
+    SmartDashboard.putBoolean("LL Has Estimate", estimate != null);
+
+    if (estimate == null) return;
+
+    SmartDashboard.putNumber("LL Tag Count", estimate.tagCount);
+    SmartDashboard.putNumber("LL Timestamp", estimate.timestampSeconds);
+    SmartDashboard.putNumber("LL Avg Area", estimate.avgTagArea);
+    SmartDashboard.putNumber("LL Vision X", estimate.pose.getX());
+    SmartDashboard.putNumber("LL Vision Y", estimate.pose.getY());
+
+    if (estimate.tagCount <= 0) return;
+    if (estimate.timestampSeconds <= 0) return;
+    if(estimate.tagCount == 1 && Math.abs(omegaDegPerSec) > 90.0){
+      return;
+    }
+
+    if (!field.isPoseWithinArea(estimate.pose)) {
+        fieldError++;
+        SmartDashboard.putNumber("Field Error", fieldError);
+        return;
+    }
+
+    double posError = driveState.Pose.getTranslation()
+        .getDistance(estimate.pose.getTranslation());
+
+    SmartDashboard.putNumber("LL Pose Error", posError);
+
+    if (estimate.tagCount >= 2) {
+        drivetrain.setVisionMeasurementStdDevs(
+            VecBuilder.fill(0.4, 0.4, 60000000)
+        );
+    } else {
+        drivetrain.setVisionMeasurementStdDevs(
+            VecBuilder.fill(0.9, 0.9, 60000000)
+        );
+    }
+
+    drivetrain.addVisionMeasurement(estimate.pose, estimate.timestampSeconds);
+    SmartDashboard.putBoolean("LL Added Vision", true);
+}
   public void setAlliance(Alliance alliance) {
     this.alliance = alliance;
   }

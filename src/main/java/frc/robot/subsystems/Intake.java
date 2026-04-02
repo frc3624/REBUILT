@@ -33,7 +33,10 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import edu.wpi.first.math.controller.ArmFeedforward;
+import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
+
 import static edu.wpi.first.units.Units.*;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -53,12 +56,22 @@ public class Intake extends SubsystemBase{
    private final double kI = 0;
    private final double kD = 0;
    private final double kG = .5;
+   private final double kS = 0;
+   private final double kV = 0;
 private static final double maxVelocity = 100;    // degrees per second
 private static final double maxAcceleration = 50; // degrees per second squared
 private static final double allowedError = 1.0;  // degrees
    private double targetDegrees = -30;
    private SparkFlex intakeLead = new SparkFlex(20, MotorType.kBrushless);
    private SparkFlex intakeFollow = new SparkFlex(21, MotorType.kBrushless);
+
+
+   private final ProfiledPIDController m_pid = new ProfiledPIDController(
+    kP, kI, kD,
+    new TrapezoidProfile.Constraints(maxVelocity, maxAcceleration)
+);
+
+private final ArmFeedforward m_ff = new ArmFeedforward(kS, kG, kV);
 
     
     private static final double GEAR_RATIO = 15.0;
@@ -157,10 +170,21 @@ public boolean reached(){
   public void periodic(){
    /*double ff = kG * Math.cos(Math.toRadians(m_encoder.getPosition()));
     leader.setVoltage(ff);*/
+
+    // double pidOutput = m_pid.calculate(getPosition(), targetDegrees);
+    
+    // // ff uses the PROFILE's current angle setpoint, not the final target
+    // double ffOutput = m_ff.calculate(
+    //     Math.toRadians(m_pid.getSetpoint().position),
+    //     Math.toRadians(m_pid.getSetpoint().velocity)
+    // );
+
+    // leader.setVoltage(pidOutput + ffOutput);
+
    
    SmartDashboard.putNumber("Intake degrees", this.targetDegrees);
                            
-  SmartDashboard.putNumber("CurrentPose", getPosition());
+  //SmartDashboard.putNumber("CurrentPose", getPosition());
                            }
   
 }

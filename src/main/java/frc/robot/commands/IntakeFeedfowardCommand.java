@@ -2,26 +2,26 @@ package frc.robot.commands;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.Intake;
-
-public class IntakeCommand extends Command {
-
+import frc.robot.Constants.IntakeArmConstants;;
+public class IntakeFeedfowardCommand extends Command {
     private final Intake intake;
-    private final double speed;
 
-    public IntakeCommand(Intake intake, double speed) {
+    public IntakeFeedfowardCommand(Intake intake){
         this.intake = intake;
-        this.speed = speed;
+
         addRequirements(intake);
     }
 
     @Override
     public void initialize() {
-        intake.setIntakeSpeed(-speed);
+        //intake.runFeedFoward();
+
     }
+
 
     @Override
     public void end(boolean interrupted) {
-        intake.setIntakeSpeed(0);
+        intake.setArmSpeed(0);
     }
 
     @Override

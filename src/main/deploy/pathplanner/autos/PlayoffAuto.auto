@@ -11,19 +11,31 @@
           }
         },
         {
+          "type": "path",
+          "data": {
+            "pathName": "LeftToDepot"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "intakeDown"
+          }
+        },
+        {
           "type": "parallel",
           "data": {
             "commands": [
               {
-                "type": "named",
+                "type": "path",
                 "data": {
-                  "name": "intake"
+                  "pathName": "DepotToLeft"
                 }
               },
               {
-                "type": "path",
+                "type": "named",
                 "data": {
-                  "pathName": "LeftToDepot"
+                  "name": "intake"
                 }
               }
             ]
@@ -32,19 +44,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "DepotToLeft"
+            "pathName": "DepotToLeft2"
           }
         },
         {
           "type": "parallel",
           "data": {
             "commands": [
-              {
-                "type": "named",
-                "data": {
-                  "name": "align"
-                }
-              },
               {
                 "type": "named",
                 "data": {

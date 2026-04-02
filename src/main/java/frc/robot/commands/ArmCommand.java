@@ -3,12 +3,16 @@ package frc.robot.commands;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.Intake;
 
-public class IntakeCommand extends Command {
+public class ArmCommand extends Command {
 
     private final Intake intake;
     private final double speed;
 
-    public IntakeCommand(Intake intake, double speed) {
+    
+    //joystick.leftTrigger().whileTrue(stallSecquenceCommand()).whileFalse(ff);
+    //joystick.rightTrigger().whileTrue(Commands.runOnce( ()-> intake.setArmSpeed(0.15))).whileFalse(ff);
+    //joystick.leftTrigger().toggleOnTrue(Commands.runOnce(() -> intake.setPosition(0)));
+    public ArmCommand(Intake intake, double speed) {
         this.intake = intake;
         this.speed = speed;
         addRequirements(intake);
@@ -16,12 +20,12 @@ public class IntakeCommand extends Command {
 
     @Override
     public void initialize() {
-        intake.setIntakeSpeed(-speed);
+        intake.setArmSpeed(speed);
     }
 
     @Override
     public void end(boolean interrupted) {
-        intake.setIntakeSpeed(0);
+        intake.setArmSpeed(0);
     }
 
     @Override
