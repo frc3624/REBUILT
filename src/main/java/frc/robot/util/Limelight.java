@@ -16,6 +16,8 @@ import frc.robot.subsystems.swerve.CommandSwerveDrivetrain;
 public class Limelight extends SubsystemBase {
   private static final double SINGLE_TAG_MAX_OMEGA_DEG_PER_SEC = 45.0;
   private static final double ROTATING_OMEGA_DEG_PER_SEC = 30.0;
+  private static final double MAX_TRANSLATION_SPEED_FOR_VISION_MPS = 1.5;
+  private static final double MAX_TRANSLATION_SPEED_FOR_SEED_MPS = 0.25;
   private static final double MAX_VISION_POS_ERROR_METERS = 1.0;
 
   CommandSwerveDrivetrain drivetrain;
@@ -51,6 +53,10 @@ public void periodic() {
     var driveState = drivetrain.getState();
     double gyroYawDeg = driveState.Pose.getRotation().getDegrees();
     double omegaDegPerSec = Math.toDegrees(driveState.Speeds.omegaRadiansPerSecond);
+    double translationSpeedMps =
+        Math.hypot(
+            driveState.Speeds.vxMetersPerSecond,
+            driveState.Speeds.vyMetersPerSecond);
 
     LimelightHelpers.SetRobotOrientation(ll, gyroYawDeg, omegaDegPerSec, 0, 0, 0, 0);
 
@@ -66,11 +72,17 @@ public void periodic() {
     SmartDashboard.putNumber("LL Avg Area", estimate.avgTagArea);
     SmartDashboard.putNumber("LL Vision X", estimate.pose.getX());
     SmartDashboard.putNumber("LL Vision Y", estimate.pose.getY());
+    SmartDashboard.putNumber("LL Translation Speed MPS", translationSpeedMps);
 
     if (estimate.tagCount <= 0) return;
     if (estimate.timestampSeconds <= 0) return;
     if (estimate.tagCount == 1 && Math.abs(omegaDegPerSec) > SINGLE_TAG_MAX_OMEGA_DEG_PER_SEC) {
       SmartDashboard.putString("LL Reject Reason", "single_tag_high_omega");
+      SmartDashboard.putBoolean("LL Added Vision", false);
+      return;
+    }
+    if (translationSpeedMps > MAX_TRANSLATION_SPEED_FOR_VISION_MPS) {
+      SmartDashboard.putString("LL Reject Reason", "high_translation_speed");
       SmartDashboard.putBoolean("LL Added Vision", false);
       return;
     }
@@ -87,7 +99,10 @@ public void periodic() {
         .getDistance(estimate.pose.getTranslation());
 
     SmartDashboard.putNumber("LL Pose Error", posError);
-    if (!visionSeeded && estimate.tagCount >= 2) {
+    if (!visionSeeded
+        && estimate.tagCount >= 2
+        && Math.abs(omegaDegPerSec) < ROTATING_OMEGA_DEG_PER_SEC
+        && translationSpeedMps < MAX_TRANSLATION_SPEED_FOR_SEED_MPS) {
         // Bootstrap odometry from a high-confidence multi-tag solve.
         drivetrain.resetPose(estimate.pose);
         visionSeeded = true;
