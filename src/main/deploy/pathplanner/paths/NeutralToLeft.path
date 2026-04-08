@@ -3,29 +3,29 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 0.7765222222222223,
-        "y": 5.983888888888889
+        "x": 7.7423698485262005,
+        "y": 5.562
       },
       "prevControl": null,
       "nextControl": {
-        "x": 1.7765222222222223,
-        "y": 5.983888888888889
+        "x": 8.7423698485262,
+        "y": 5.562
       },
       "isLocked": false,
-      "linkedName": "depot2"
+      "linkedName": "NeutralEnd"
     },
     {
       "anchor": {
-        "x": 3.4854777777777777,
-        "y": 5.584366666666666
+        "x": 3.5324487127001456,
+        "y": 5.5620407455422125
       },
       "prevControl": {
-        "x": 2.4854777777777777,
-        "y": 5.584366666666666
+        "x": 2.5324487127001456,
+        "y": 5.5620407455422125
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "start"
+      "linkedName": "Left"
     }
   ],
   "rotationTargets": [],
@@ -42,13 +42,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": -43.876697285924585
+    "rotation": -62.99062840846664
   },
   "reversed": false,
-  "folder": null,
+  "folder": "NeutralZonePaths",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 180.0
+    "rotation": -89.95009079701957
   },
   "useDefaultConstraints": true
 }

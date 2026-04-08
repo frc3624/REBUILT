@@ -1,4 +1,4 @@
-package frc.robot.subsystems;
+package frc.robot.subsystems.swerve;
 
 import static edu.wpi.first.units.Units.*;
 
@@ -193,7 +193,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         return field;
     }
 
-    public Distance getShotDistance(Translation2d targetPose) {
+    /*public Distance getShotDistance(Translation2d targetPose) {
         Pose2d drivePose = getState().Pose;
         double centerToTargetMeters = drivePose.getTranslation().getDistance(targetPose);
         double centerToShooterMeters = DriveConstants.shooterSideOffset.in(Units.Meters);
@@ -247,99 +247,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                     .withRotationalRate(-rotationalRate * DriveConstants.maxAngularRate);
             }
         });
-    }
-
-    public Command debugLimelight() {
-        final String LL = "limelight";
-        return run(() -> {
-            boolean hasTarget = LimelightHelpers.getTV(LL);
-            double tx = LimelightHelpers.getTX(LL);
-            double[] rawPose = LimelightHelpers.getTargetPose_CameraSpace(LL);
-
-            SmartDashboard.putBoolean("LL HasTarget", hasTarget);
-            SmartDashboard.putNumber("LL tx", tx);
-            SmartDashboard.putNumber("LL raw[0]", rawPose.length > 0 ? rawPose[0] : -999);
-            SmartDashboard.putNumber("LL raw[1]", rawPose.length > 1 ? rawPose[1] : -999);
-            SmartDashboard.putNumber("LL raw[2]", rawPose.length > 2 ? rawPose[2] : -999);
-            SmartDashboard.putNumber("LL raw[3]", rawPose.length > 3 ? rawPose[3] : -999);
-            SmartDashboard.putNumber("LL raw[4]", rawPose.length > 4 ? rawPose[4] : -999);
-            SmartDashboard.putNumber("LL raw[5]", rawPose.length > 5 ? rawPose[5] : -999);
-            SmartDashboard.putNumber("LL array length", rawPose.length);
-        }).withName("DebugLimelight");
-    }
-
-    public Command followAprilTagLimelight() {
-        final String LIMELIGHT_NAME = "limelight";
-        final double kTurnP = 0.04;
-        final double kForwardP = 0.5;
-        final double targetDistance = 1.0;
-        final double deadband = 0.2;
-
-        SwerveRequest.RobotCentric request = new SwerveRequest.RobotCentric()
-            .withDriveRequestType(DriveRequestType.Velocity);
-
-        return run(() -> {
-            if (!LimelightHelpers.getTV(LIMELIGHT_NAME)) {
-                setControl(request.withVelocityX(0).withVelocityY(0).withRotationalRate(0));
-                return;
-            }
-
-            double tx = LimelightHelpers.getTX(LIMELIGHT_NAME);
-            double currentDistance = LimelightHelpers.getTargetPose3d_CameraSpace(LIMELIGHT_NAME)
-                .getTranslation()
-                .getZ();
-
-            distance = currentDistance;
-
-            double distanceError = currentDistance - targetDistance;
-            double forwardSpeed = Math.abs(distanceError) < deadband
-                ? 0
-                : MathUtil.clamp(distanceError * kForwardP, -2.0, 2.0);
-
-            double rotation = MathUtil.clamp(-tx * kTurnP, -1.5, 1.5);
-
-            SmartDashboard.putNumber("LL Follow Distance", currentDistance);
-            SmartDashboard.putNumber("LL Distance Error", distanceError);
-            SmartDashboard.putNumber("LL Forward Speed", forwardSpeed);
-
-            setControl(
-                request.withVelocityX(forwardSpeed)
-                    .withVelocityY(0)
-                    .withRotationalRate(rotation)
-            );
-        }).withName("FollowAprilTag");
-    }
-
-    public Command driveWithAutoRotation(DoubleSupplier translationX, DoubleSupplier translationY) {
-        final double MaxSpeed = 1.0 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
-        final double MaxAngularRate = RotationsPerSecond.of(2).in(RadiansPerSecond);
-        final String LIMELIGHT_NAME = "limelight";
-        final double kTurnP = 0.03;
-
-        final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
-            .withDriveRequestType(DriveRequestType.OpenLoopVoltage)
-            .withDeadband(MaxSpeed * 0.1)
-            .withRotationalDeadband(MaxAngularRate * 0.1);
-
-        return run(() -> {
-            double xSpeed = translationX.getAsDouble() * MaxSpeed;
-            double ySpeed = translationY.getAsDouble() * MaxSpeed;
-
-            Translation2d scaledTranslation = new Translation2d(xSpeed, ySpeed).times(0.8);
-
-            double rotation = 0.0;
-            if (LimelightHelpers.getTV(LIMELIGHT_NAME)) {
-                double tx = LimelightHelpers.getTX(LIMELIGHT_NAME);
-                rotation = MathUtil.clamp(tx * kTurnP, -2.5, 2.5);
-            }
-
-            setControl(
-                drive.withVelocityX(scaledTranslation.getX())
-                    .withVelocityY(scaledTranslation.getY())
-                    .withRotationalRate(rotation)
-            );
-        }).withName("DriveWithAutoRotation");
-    }
+    }*/
 
     public Command applyRequest(Supplier<SwerveRequest> request) {
         return run(() -> this.setControl(request.get()));

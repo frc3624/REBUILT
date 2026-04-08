@@ -19,11 +19,8 @@ import frc.robot.Constants.ShooterConstants;
  
 public class Shooter extends SubsystemBase {
  
-    private final SparkFlex leader =
-        new SparkFlex(ShooterConstants.leadShooterID, MotorType.kBrushless);
-        private final SparkFlex follower =
-        new SparkFlex(ShooterConstants.followShooterID, MotorType.kBrushless);
-    //private final SparkFlex conveyor = new SparkFlex(ShooterConstants.conveyorID, MotorType.kBrushless);
+    private final SparkFlex leader = new SparkFlex(ShooterConstants.leadShooterID, MotorType.kBrushless);
+    private final SparkFlex follower = new SparkFlex(ShooterConstants.followShooterID, MotorType.kBrushless);
  
     private final RelativeEncoder encoder;
     private final SparkClosedLoopController pidController;
@@ -59,7 +56,7 @@ public class Shooter extends SubsystemBase {
     
     public void setBothSpeed(double speed1, double speed2){
         leader.set(speed1);
-        //conveyor.set(speed2);
+
     }
 
     public void configureMotors(){
@@ -69,78 +66,43 @@ public class Shooter extends SubsystemBase {
               .smartCurrentLimit(ShooterConstants.kCurrentLimit)
               .voltageCompensation(ShooterConstants.kVoltageComp)
               .inverted(false);
- 
-        // Configure PIDF for velocity control
+
         leaderConfig.closedLoop
               .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
               .pid(ShooterConstants.kP, ShooterConstants.kI, ShooterConstants.kD).feedForward
               .kV(ShooterConstants.kFF);
  
-            followConfig.follow(ShooterConstants.leadShooterID, true);
-            leader.configure(leaderConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-            follower.configure(followConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+        followConfig.follow(ShooterConstants.leadShooterID, true);
+        leader.configure(leaderConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+        follower.configure(followConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     }
 
-    /**
-     * Set shooter velocity in RPM using closed-loop control
-     */
     public void setVelocity(double rpm) {
         targetRPM = rpm;
         pidController.setSetpoint(targetRPM, ControlType.kVelocity);
     }
  
-    /**
-     * Run shooter at open-loop percentage (for testing)
-     */
     public void runOpenLoop(double percent) {
          targetRPM = 0;
          leader.set(percent);
     }
- 
-    /**
-     * Stop the shooter
-     */
-    public void stop() {
-        targetRPM = 0;
-        leader.stopMotor();
-    }
 
-    public void setConveyorSpeed(double speed)
-    {
-      //conveyor.set(speed);
-    }
- 
-    /**
-     * Check if shooter is at target speed
-     */
     public boolean atSpeed() {
         return Math.abs(encoder.getVelocity() - targetRPM) < ShooterConstants.kToleranceRPM;
     }
  
-    /**
-     * Get current velocity in RPM
-     */
     public double getVelocity() {
         return encoder.getVelocity();
     }
  
-    /**
-     * Get target velocity in RPM
-     */
     public double getTargetVelocity() {
         return targetRPM;
     }
  
-    /**
-     * Get motor current draw in amps
-     */
     public double getCurrent() {
         return leader.getOutputCurrent();
     }
  
-    /**
-     * Get velocity error in RPM
-     */
     public double getError() {
         return targetRPM - encoder.getVelocity();
     }
@@ -156,7 +118,6 @@ public class Shooter extends SubsystemBase {
     public void setRpm(double rpm){
         targetRPM = rpm;
     }
-
 
     @Override
     public void periodic() {

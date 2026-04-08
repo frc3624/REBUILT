@@ -7,18 +7,20 @@ package frc.robot.util;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.subsystems.CommandSwerveDrivetrain;
-import frc.robot.util.RectanglePoseArea;
+import frc.robot.Constants.VisionConstants;
+import frc.robot.subsystems.swerve.CommandSwerveDrivetrain;
 
 public class Limelight extends SubsystemBase {
+  private static final double SINGLE_TAG_MAX_OMEGA_DEG_PER_SEC = 45.0;
+  private static final double ROTATING_OMEGA_DEG_PER_SEC = 30.0;
+  private static final double MAX_VISION_POS_ERROR_METERS = 1.0;
+
   CommandSwerveDrivetrain drivetrain;
   Alliance alliance;
-  private String ll = "limelight";
+  private String ll = VisionConstants.FRONT_LIMELIGHT;
   private Boolean enable = false;
   private Boolean trust = false;
   private int fieldError = 0;
@@ -48,7 +50,7 @@ public void periodic() {
     double gyroYawDeg = driveState.Pose.getRotation().getDegrees();
     double omegaDegPerSec = Math.toDegrees(driveState.Speeds.omegaRadiansPerSecond);
 
-    LimelightHelpers.SetRobotOrientation(ll, gyroYawDeg, 0, 0, 0, 0, 0);
+    LimelightHelpers.SetRobotOrientation(ll, gyroYawDeg, omegaDegPerSec, 0, 0, 0, 0);
 
     LimelightHelpers.PoseEstimate estimate =
         LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(ll);
@@ -65,7 +67,7 @@ public void periodic() {
 
     if (estimate.tagCount <= 0) return;
     if (estimate.timestampSeconds <= 0) return;
-    if(estimate.tagCount == 1 && Math.abs(omegaDegPerSec) > 90.0){
+    if (estimate.tagCount == 1 && Math.abs(omegaDegPerSec) > SINGLE_TAG_MAX_OMEGA_DEG_PER_SEC) {
       return;
     }
 
@@ -79,8 +81,18 @@ public void periodic() {
         .getDistance(estimate.pose.getTranslation());
 
     SmartDashboard.putNumber("LL Pose Error", posError);
+    if (posError > MAX_VISION_POS_ERROR_METERS) {
+        distanceError++;
+        SmartDashboard.putNumber("Limelight Error", distanceError);
+        SmartDashboard.putBoolean("LL Added Vision", false);
+        return;
+    }
 
-    if (estimate.tagCount >= 2) {
+    if (Math.abs(omegaDegPerSec) > ROTATING_OMEGA_DEG_PER_SEC) {
+        drivetrain.setVisionMeasurementStdDevs(
+            VecBuilder.fill(1.5, 1.5, 60000000)
+        );
+    } else if (estimate.tagCount >= 2) {
         drivetrain.setVisionMeasurementStdDevs(
             VecBuilder.fill(0.4, 0.4, 60000000)
         );

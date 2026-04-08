@@ -18,83 +18,61 @@ import frc.robot.Constants.ShooterConstants;
  
 public class Conveyor extends SubsystemBase {
  
-    private final SparkFlex conveyor = new SparkFlex(ShooterConstants.conveyorID, MotorType.kBrushless);
-    private final SparkFlex followConveyor = new SparkFlex(ShooterConstants.followConveyorID, MotorType.kBrushless);
-    private final SparkFlex preIndexer = new SparkFlex(23, MotorType.kBrushless);
+    private final SparkFlex conveyor_m = new SparkFlex(ShooterConstants.conveyorID, MotorType.kBrushless);
+    private final SparkFlex followConveyor_m = new SparkFlex(ShooterConstants.followConveyorID, MotorType.kBrushless);
+    private final SparkFlex index_m = new SparkFlex(ShooterConstants.indexID, MotorType.kBrushless);
 
     private final RelativeEncoder encoder;
     private final SparkClosedLoopController pidController;
- 
-    private double targetRPM = 0;
- 
+  
     public Conveyor() {
+        configureMotors();
+        pidController = conveyor_m.getClosedLoopController();
+        encoder = conveyor_m.getEncoder();
+    }
+
+    public void configureMotors(){
         SparkFlexConfig leaderConfig = new SparkFlexConfig();
         SparkFlexConfig followConfig = new SparkFlexConfig();
         SparkFlexConfig indexConfig = new SparkFlexConfig();
+
         leaderConfig.closedLoop
               .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
               .pid(ShooterConstants.kCP, ShooterConstants.kCI, ShooterConstants.kCD).feedForward
               .kV(ShooterConstants.kCFF);
-       pidController = conveyor.getClosedLoopController();
- 
-
         leaderConfig.idleMode(IdleMode.kCoast)
               .smartCurrentLimit(ShooterConstants.kCurrentLimit)
               .voltageCompensation(ShooterConstants.kVoltageComp)
               .inverted(false);
+
+        followConfig.follow(ShooterConstants.conveyorID, true);
+
         indexConfig.idleMode(IdleMode.kCoast)
               .smartCurrentLimit(ShooterConstants.kCurrentLimit)
               .voltageCompensation(ShooterConstants.kVoltageComp)
               .inverted(false);
-        // Configure PIDF for velocity control
-        //indexConfig.follow(ShooterConstants.conveyorID, true);
-        followConfig.follow(ShooterConstants.conveyorID, true);
         
-
-        conveyor.configure(leaderConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-        followConveyor.configure(followConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-        preIndexer.configure(indexConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-        // Get encoder and PID controller
-        encoder = conveyor.getEncoder();
-        
-        
+        conveyor_m.configure(leaderConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+        followConveyor_m.configure(followConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+        index_m.configure(indexConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);   
     }
 
-     public void setVelocity(double rpm, double speed) {
-        targetRPM = rpm;
-        pidController.setSetpoint(targetRPM, ControlType.kVelocity);
-        preIndexer.set(speed);
+     public void setVelocity(double rpm, double indexSpeed) {
+        pidController.setSetpoint(rpm, ControlType.kVelocity);
+        index_m.set(indexSpeed);
     }
     
-    public void setSpeed(double speed1, double speed2){
-        conveyor.set(speed1);
-        preIndexer.set(speed2);
+    public void setSpeed(double conveyorSpeed, double indexSpeed){
+        conveyor_m.set(conveyorSpeed);
+        index_m.set(indexSpeed);
     }
 
-
-    public void configureMotors(){
-      SparkFlexConfig leaderConfig = new SparkFlexConfig();
-
-        leaderConfig.idleMode(IdleMode.kCoast)
-              .smartCurrentLimit(ShooterConstants.kCurrentLimit)
-              .voltageCompensation(ShooterConstants.kVoltageComp)
-              .inverted(false);
- 
-       
- 
-            
-            conveyor.configure(leaderConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-           
-    }
-
-    public double getConveyorSpeed()
-    {
+    public double getConveyorSpeed(){
         return encoder.getVelocity();
     }
 
     @Override
-    public void periodic()
-    {
+    public void periodic(){
         SmartDashboard.putNumber("Conveyor/Current RPM", getConveyorSpeed());
     }
   

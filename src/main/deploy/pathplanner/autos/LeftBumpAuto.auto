@@ -1,0 +1,37 @@
+{
+  "version": "2025.0",
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "path",
+          "data": {
+            "pathName": "LeftToNeutral"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "NeutralIntake1"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "NeutralIntake2"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "NeutralToLeft"
+          }
+        }
+      ]
+    }
+  },
+  "resetOdom": true,
+  "folder": null,
+  "choreoAuto": false
+}

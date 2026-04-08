@@ -3,29 +3,29 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 3.5,
-        "y": 5.5
+        "x": 3.5272128024927216,
+        "y": 5.5620407455422125
       },
       "prevControl": null,
       "nextControl": {
-        "x": 4.499999999999999,
-        "y": 5.5
+        "x": 3.3469918019628007,
+        "y": 5.9738523817719535
       },
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "Left"
     },
     {
       "anchor": {
-        "x": 2.9910271041369465,
-        "y": 4.326119828815978
+        "x": 3.3428588973799127,
+        "y": 5.990338200509461
       },
       "prevControl": {
-        "x": 1.9910271041369465,
-        "y": 4.326119828815978
+        "x": 3.5201103176979096,
+        "y": 5.563843246072893
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "AlignToDepot"
     }
   ],
   "rotationTargets": [],
@@ -35,20 +35,20 @@
   "globalConstraints": {
     "maxVelocity": 4.0,
     "maxAcceleration": 1.0,
-    "maxAngularVelocity": 360.0,
-    "maxAngularAcceleration": 360.0,
+    "maxAngularVelocity": 180.0,
+    "maxAngularAcceleration": 180.0,
     "nominalVoltage": 12.0,
     "unlimited": false
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": 0.0
+    "rotation": 179.892474534652
   },
   "reversed": false,
-  "folder": null,
+  "folder": "DepotPaths",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 177.66269414087625
+    "rotation": -62.99062840846664
   },
-  "useDefaultConstraints": true
+  "useDefaultConstraints": false
 }

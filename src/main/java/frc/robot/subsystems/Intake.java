@@ -41,6 +41,7 @@ import static edu.wpi.first.units.Units.*;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import frc.robot.Constants.ArmConstants;
 import frc.robot.Constants.IntakeConstants;
 import frc.robot.Constants.ShooterConstants;
 
@@ -49,8 +50,8 @@ import frc.robot.Constants.ShooterConstants;
 public class Intake extends SubsystemBase{
    
 
-   private SparkFlex leader = new SparkFlex(14, MotorType.kBrushless);
-   private SparkFlex follower = new SparkFlex(15, MotorType.kBrushless);
+   private SparkFlex leader = new SparkFlex(ArmConstants.leaderID, MotorType.kBrushless);
+   private SparkFlex follower = new SparkFlex(ArmConstants.followerID, MotorType.kBrushless);
    //private final TalonFX intakeMotor = new TalonFX(IntakeConstants.motorID);
    private final double kP = 3;
    private final double kI = 0;
@@ -58,12 +59,12 @@ public class Intake extends SubsystemBase{
    private final double kG = .5;
    private final double kS = 0;
    private final double kV = 0;
-private static final double maxVelocity = 100;    // degrees per second
-private static final double maxAcceleration = 50; // degrees per second squared
-private static final double allowedError = 1.0;  // degrees
+   private static final double maxVelocity = 100;    // degrees per second
+   private static final double maxAcceleration = 50; // degrees per second squared
+   private static final double allowedError = 1.0;  // degrees
    private double targetDegrees = -30;
-   private SparkFlex intakeLead = new SparkFlex(20, MotorType.kBrushless);
-   private SparkFlex intakeFollow = new SparkFlex(21, MotorType.kBrushless);
+   private SparkFlex intakeLead = new SparkFlex(IntakeConstants.leaderID, MotorType.kBrushless);
+   private SparkFlex intakeFollow = new SparkFlex(IntakeConstants.followerId, MotorType.kBrushless);
 
 
    private final ProfiledPIDController m_pid = new ProfiledPIDController(
@@ -168,24 +169,24 @@ public boolean reached(){
 
   @Override 
   public void periodic(){
-   /*double ff = kG * Math.cos(Math.toRadians(m_encoder.getPosition()));
-    leader.setVoltage(ff);*/
+    /*double ff = kG * Math.cos(Math.toRadians(m_encoder.getPosition()));
+      leader.setVoltage(ff);*/
 
-    // double pidOutput = m_pid.calculate(getPosition(), targetDegrees);
+      // double pidOutput = m_pid.calculate(getPosition(), targetDegrees);
+      
+      // // ff uses the PROFILE's current angle setpoint, not the final target
+      // double ffOutput = m_ff.calculate(
+      //     Math.toRadians(m_pid.getSetpoint().position),
+      //     Math.toRadians(m_pid.getSetpoint().velocity)
+      // );
+
+      // leader.setVoltage(pidOutput + ffOutput);
+
     
-    // // ff uses the PROFILE's current angle setpoint, not the final target
-    // double ffOutput = m_ff.calculate(
-    //     Math.toRadians(m_pid.getSetpoint().position),
-    //     Math.toRadians(m_pid.getSetpoint().velocity)
-    // );
-
-    // leader.setVoltage(pidOutput + ffOutput);
-
-   
-   SmartDashboard.putNumber("Intake degrees", this.targetDegrees);
-                           
-  //SmartDashboard.putNumber("CurrentPose", getPosition());
-                           }
+    SmartDashboard.putNumber("Intake degrees", this.targetDegrees);
+                            
+    //SmartDashboard.putNumber("CurrentPose", getPosition());
+  }
   
 }
 
