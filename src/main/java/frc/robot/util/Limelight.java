@@ -25,6 +25,7 @@ public class Limelight extends SubsystemBase {
   private Boolean trust = false;
   private int fieldError = 0;
   private int distanceError = 0;
+  private boolean visionSeeded = false;
   private Pose2d botpose;
   private static final RectanglePoseArea field =
         new RectanglePoseArea(new Translation2d(0.0, 0.0), new Translation2d(16.54, 8.02));
@@ -39,6 +40,7 @@ public class Limelight extends SubsystemBase {
 @Override
 public void periodic() {
     SmartDashboard.putBoolean("LL Periodic Running", true);
+    SmartDashboard.putBoolean("LL Vision Seeded", visionSeeded);
 
     if (!enable) {
         SmartDashboard.putBoolean("LL Enabled", false);
@@ -68,12 +70,16 @@ public void periodic() {
     if (estimate.tagCount <= 0) return;
     if (estimate.timestampSeconds <= 0) return;
     if (estimate.tagCount == 1 && Math.abs(omegaDegPerSec) > SINGLE_TAG_MAX_OMEGA_DEG_PER_SEC) {
+      SmartDashboard.putString("LL Reject Reason", "single_tag_high_omega");
+      SmartDashboard.putBoolean("LL Added Vision", false);
       return;
     }
 
     if (!field.isPoseWithinArea(estimate.pose)) {
         fieldError++;
         SmartDashboard.putNumber("Field Error", fieldError);
+        SmartDashboard.putString("LL Reject Reason", "pose_off_field");
+        SmartDashboard.putBoolean("LL Added Vision", false);
         return;
     }
 
@@ -81,9 +87,19 @@ public void periodic() {
         .getDistance(estimate.pose.getTranslation());
 
     SmartDashboard.putNumber("LL Pose Error", posError);
+    if (!visionSeeded && estimate.tagCount >= 2) {
+        // Bootstrap odometry from a high-confidence multi-tag solve.
+        drivetrain.resetPose(estimate.pose);
+        visionSeeded = true;
+        SmartDashboard.putString("LL Reject Reason", "none_seeded_pose");
+        SmartDashboard.putBoolean("LL Added Vision", true);
+        return;
+    }
+
     if (posError > MAX_VISION_POS_ERROR_METERS) {
         distanceError++;
         SmartDashboard.putNumber("Limelight Error", distanceError);
+        SmartDashboard.putString("LL Reject Reason", "pos_error_gate");
         SmartDashboard.putBoolean("LL Added Vision", false);
         return;
     }
@@ -103,6 +119,8 @@ public void periodic() {
     }
 
     drivetrain.addVisionMeasurement(estimate.pose, estimate.timestampSeconds);
+    visionSeeded = true;
+    SmartDashboard.putString("LL Reject Reason", "none");
     SmartDashboard.putBoolean("LL Added Vision", true);
 }
   public void setAlliance(Alliance alliance) {
