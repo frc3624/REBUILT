@@ -7,6 +7,7 @@ package frc.robot.util;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -19,6 +20,7 @@ public class Limelight extends SubsystemBase {
   private static final double MAX_TRANSLATION_SPEED_FOR_VISION_MPS = 1.5;
   private static final double MAX_TRANSLATION_SPEED_FOR_SEED_MPS = 0.25;
   private static final double MAX_VISION_POS_ERROR_METERS = 1.0;
+  private static final double AUTO_MAX_VISION_POS_ERROR_METERS = 0.5;
 
   CommandSwerveDrivetrain drivetrain;
   Alliance alliance;
@@ -76,6 +78,12 @@ public void periodic() {
 
     if (estimate.tagCount <= 0) return;
     if (estimate.timestampSeconds <= 0) return;
+    final boolean isAuto = DriverStation.isAutonomousEnabled();
+    if (isAuto && estimate.tagCount < 2) {
+      SmartDashboard.putString("LL Reject Reason", "auto_requires_multi_tag");
+      SmartDashboard.putBoolean("LL Added Vision", false);
+      return;
+    }
     if (estimate.tagCount == 1 && Math.abs(omegaDegPerSec) > SINGLE_TAG_MAX_OMEGA_DEG_PER_SEC) {
       SmartDashboard.putString("LL Reject Reason", "single_tag_high_omega");
       SmartDashboard.putBoolean("LL Added Vision", false);
@@ -99,7 +107,8 @@ public void periodic() {
         .getDistance(estimate.pose.getTranslation());
 
     SmartDashboard.putNumber("LL Pose Error", posError);
-    if (!visionSeeded
+    if (!isAuto
+        && !visionSeeded
         && estimate.tagCount >= 2
         && Math.abs(omegaDegPerSec) < ROTATING_OMEGA_DEG_PER_SEC
         && translationSpeedMps < MAX_TRANSLATION_SPEED_FOR_SEED_MPS) {
@@ -111,7 +120,8 @@ public void periodic() {
         return;
     }
 
-    if (posError > MAX_VISION_POS_ERROR_METERS) {
+    double maxVisionPosErrorMeters = isAuto ? AUTO_MAX_VISION_POS_ERROR_METERS : MAX_VISION_POS_ERROR_METERS;
+    if (posError > maxVisionPosErrorMeters) {
         distanceError++;
         SmartDashboard.putNumber("Limelight Error", distanceError);
         SmartDashboard.putString("LL Reject Reason", "pos_error_gate");
